@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using Gameplay.Data;
 using Gameplay.Enums;
+using Newtonsoft.Json;
 using UnityEditor;
 using UnityEngine;
 
@@ -130,7 +131,7 @@ namespace Editor
             if (levelsDataJson==null)
             {
                 LevelsData levelsData = new LevelsData();
-                var json =JsonUtility.ToJson(levelsData);
+                var json =JsonConvert.SerializeObject(levelsData);
 
                 if (AssetDatabase.IsValidFolder("Assets/Resources/Data")==false)
                 {
@@ -145,7 +146,7 @@ namespace Editor
             }
             else
             {
-                _levelsData = JsonUtility.FromJson<LevelsData>(levelsDataJson.text);
+                _levelsData = JsonConvert.DeserializeObject<LevelsData>(levelsDataJson.text);
                 SelectLevel(0);
             }
         }
@@ -189,7 +190,7 @@ namespace Editor
         private void SaveLevelsData()
         {
             CorrectLevelData();
-            string dataJson = JsonUtility.ToJson(_levelsData);
+            string dataJson = JsonConvert.SerializeObject(_levelsData);
             System.IO.File.WriteAllText(Application.dataPath+LEVELS_DATA_PATH, dataJson);
             
             AssetDatabase.Refresh();
