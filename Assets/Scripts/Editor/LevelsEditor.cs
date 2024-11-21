@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace Editor
 {
-    public class GridEditor : EditorWindow
+    public class LevelsEditor : EditorWindow
     {
         private const int GRID_SIZE = 15; //maximum size of comfort field (mobiles)
         private const string LEVELS_DATA_NAME = "LevelsData";
@@ -30,7 +30,7 @@ namespace Editor
         [MenuItem("Window/Levels Editor")]
         public static void ShowWindow()
         {
-            GetWindow<GridEditor>("Levels Editor");
+            GetWindow<LevelsEditor>("Levels Editor");
         }
 
         private void OnEnable()
@@ -95,7 +95,7 @@ namespace Editor
         private void DrawGrid()
         {
             var gridSize = GRID_SIZE - 1;
-            for (int yPos = 1; yPos < gridSize; yPos++)
+            for (int yPos = 0; yPos <= gridSize; yPos++)
             {
                 EditorGUILayout.BeginHorizontal(); //buttons draw from left-up point, while actual data start will be left-bottom point
                 GUILayout.FlexibleSpace();
@@ -147,7 +147,10 @@ namespace Editor
             else
             {
                 _levelsData = JsonConvert.DeserializeObject<LevelsData>(levelsDataJson.text);
-                SelectLevel(0);
+                if (_levelsData!=null && _levelsData.Data!=null)
+                {
+                    SelectLevel(0);
+                }
             }
         }
 
@@ -176,7 +179,7 @@ namespace Editor
             }
         }
 
-        private void CorrectLevelData()
+        private void CorrectLevelData() //make grid corrected to fit game conditions
         {
             if (_currentSelectedLevelData.BlocksDatas.Length!=0)
             {
