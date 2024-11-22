@@ -10,6 +10,7 @@ public class Bootstrapper : MonoBehaviour
     private async void Start()
     {
         Application.targetFrameRate = 60;
+        Input.multiTouchEnabled = false;
         await _servicesHolder.InitializeServices();
 
         SceneManager.LoadSceneAsync(1);

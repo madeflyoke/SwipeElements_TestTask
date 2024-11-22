@@ -40,6 +40,7 @@ namespace Services
             #region Services
 
             AddService<AssetsProviderService>();
+            AddService<InputService.InputService>();
 
             #endregion
             

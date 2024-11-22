@@ -8,5 +8,10 @@ namespace Utility
         {
             public const string DATA = "Data/";
         }
+
+        public static class Layers
+        {
+            public const int BLOCK = 6;
+        }
     }
 }

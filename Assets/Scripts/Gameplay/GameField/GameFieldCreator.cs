@@ -68,20 +68,15 @@ namespace Gameplay.GameField
             var leftCellX = _gridHolder.Cells.Values.Min(x => x.transform.position.x);
             leftCellX -= Constants.CELL_SIZE / 2;
              
-            var scale = transform.localScale.x * (targetX / leftCellX);
-            transform.localScale = Vector3.one*scale;
+            var scale = _gridHolder.transform.localScale.x * (targetX / leftCellX);
+            _gridHolder.transform.localScale = Vector3.one*scale;
         }
         
-        
-        [Button]
-        public void Clear()
-        {
-            _levelData = null;
-        }
+        #if UNITY_EDITOR
 
         private void OnDrawGizmos()
         {
-            if (_levelData==null)
+            if (_levelData==null || _gridHolder.Cells==null)
             {
                 return;
             }
@@ -92,5 +87,7 @@ namespace Gameplay.GameField
                 Gizmos.DrawSphere(kvp.Value.transform.position,0.1f);
             }
         }
+        
+        #endif
     }
 }

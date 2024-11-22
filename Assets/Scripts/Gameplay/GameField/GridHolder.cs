@@ -1,13 +1,34 @@
+using System;
 using System.Collections.Generic;
 using Gameplay.Blocks;
+using Services;
+using Services.InputService;
+using Services.InputService.Enums;
 using UnityEngine;
+using Utility;
+using Zenject;
 
 namespace Gameplay.GameField
 {
     public class GridHolder : MonoBehaviour
     {
-        public Dictionary<Vector2Int, GridCell> Cells { get; set; }
+        public Dictionary<Vector2Int, GridCell> Cells { get; private set; }
+        private InputService _inputService;
+        private Camera _camera;
 
+        [Inject]
+        public void Construct(ServicesHolder servicesHolder)
+        {
+            _inputService = servicesHolder.GetService<InputService>();
+            _inputService.SwipePerformed += OnSwipePerformed;
+            _camera = Camera.main;
+        }
+
+        public void OnDisable()
+        {
+            _inputService.SwipePerformed -= OnSwipePerformed;
+        }
+        
         public void Create(int width, int height, float cellSize)
         {
             Cells = new Dictionary<Vector2Int, GridCell>();
@@ -36,6 +57,17 @@ namespace Gameplay.GameField
             }
         }
         
+        private void OnSwipePerformed(Vector3 screenStartPos, SwipeDirection swipeDirection)
+        {
+            var worldPos = (Vector2) _camera.ScreenToWorldPoint(screenStartPos);
+            var hit = Physics2D.Raycast(worldPos,Vector2.zero, 1f ,layerMask:~Constants.Layers.BLOCK);
+
+            if (hit.collider!=null)
+            {
+                Debug.LogWarning(hit.transform.gameObject.name);
+            }
+        }
+
         public void SetBlock(Block block, Vector2Int coord)
         {
             Cells[coord].SetBlock(block);
