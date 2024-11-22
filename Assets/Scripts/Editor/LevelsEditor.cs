@@ -2,13 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Gameplay.Data;
-using Gameplay.Enums;
+using Gameplay.Blocks.Enums;
+using Gameplay.Levels.Data;
 using Newtonsoft.Json;
 using UnityEditor;
 using UnityEngine;
 using Utility;
-using Utility.Editor;
 
 namespace Editor
 {

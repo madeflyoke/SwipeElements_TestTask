@@ -1,6 +1,6 @@
 using System;
 
-namespace Gameplay.Enums
+namespace Gameplay.Blocks.Enums
 {
     [Serializable]
     public enum BlockType

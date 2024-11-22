@@ -1,9 +1,10 @@
+#if UNITY_EDITOR
 using System.IO;
 using Newtonsoft.Json;
 using UnityEditor;
 using UnityEngine;
 
-namespace Utility.Editor
+namespace Utility
 {
     public static class EditorResourcesManager //sync with assets provider service?
     {
@@ -53,3 +54,4 @@ namespace Utility.Editor
         }
     }
 }
+#endif

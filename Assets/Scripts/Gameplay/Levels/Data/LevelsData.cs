@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Gameplay.Data
+namespace Gameplay.Levels.Data
 {
     [Serializable]
     public class LevelsData
@@ -19,6 +19,11 @@ namespace Gameplay.Data
             Data = new List<GridBlocksLevelData>();
         }
 
+        public GridBlocksLevelData GetLevelData(int levelId)
+        {
+            return Data.FirstOrDefault(x => x.LevelId == levelId);
+        }
+        
         public GridBlocksLevelData AddNextLevelData()
         {
             var newData = new GridBlocksLevelData(Data.Count);
