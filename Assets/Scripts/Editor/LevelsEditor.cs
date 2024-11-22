@@ -7,14 +7,14 @@ using Gameplay.Enums;
 using Newtonsoft.Json;
 using UnityEditor;
 using UnityEngine;
+using Utility;
+using Utility.Editor;
 
 namespace Editor
 {
     public class LevelsEditor : EditorWindow
     {
         private const int GRID_SIZE = 15; //maximum size of comfort field (mobiles)
-        private const string LEVELS_DATA_NAME = "LevelsData";
-        private const string LEVELS_DATA_PATH = "/Resources/Data/"+LEVELS_DATA_NAME+".json";
     
         private readonly Dictionary<Color, BlockType> _blockTypesByColors = new Dictionary<Color, BlockType>()
         {
@@ -127,47 +127,36 @@ namespace Editor
         
         private void LoadLevelsData()
         {
-            TextAsset levelsDataJson = Resources.Load<TextAsset>($"Data/{LEVELS_DATA_NAME}");
-            if (levelsDataJson==null)
+            LevelsData levelsData = EditorResourcesManager.LoadJsonDataAsset<LevelsData>();
+            if (levelsData==null)
             {
-                LevelsData levelsData = new LevelsData();
+                levelsData = new LevelsData();
                 var json =JsonConvert.SerializeObject(levelsData);
-
-                if (AssetDatabase.IsValidFolder("Assets/Resources/Data")==false)
-                {
-                    AssetDatabase.CreateFolder("Assets/Resources", "Data");
-                    AssetDatabase.Refresh();
-
-                }
-
-                File.WriteAllText(Application.dataPath+LEVELS_DATA_PATH, json);
-                AssetDatabase.Refresh();
-                _levelsData = levelsData;
+                EditorResourcesManager.CreateJson<LevelsData>(json);
             }
-            else
+            _levelsData = levelsData;
+            if (_levelsData!=null && _levelsData.Data!=null)
             {
-                _levelsData = JsonConvert.DeserializeObject<LevelsData>(levelsDataJson.text);
-                if (_levelsData!=null && _levelsData.Data!=null)
-                {
-                    SelectLevel(0);
-                }
+                SelectLevel(0);
             }
         }
 
         private void SelectLevel(int id)
         {
             ResetGrid();
-            if (_levelsData.Data.Count>0)
+            if (_levelsData.Data.Count==0)
             {
-                _currentSelectedLevelData = _levelsData.Data[id];
+                return;
+               
             }
+            _currentSelectedLevelData = _levelsData.Data[id];
 
-            for (int i = 0; i < _currentSelectedLevelData.BlocksDatas.GetLength(0); i++)
+            for (int i = 0; i < _currentSelectedLevelData.GridWidth; i++)
             {
-                for (int j = 0; j < _currentSelectedLevelData.BlocksDatas.GetLength(1); j++)
+                for (int j = 0; j < _currentSelectedLevelData.GridHeight; j++)
                 {
                     var colorKvp = _blockTypesByColors
-                        .FirstOrDefault(x => x.Value == _currentSelectedLevelData.BlocksDatas[i, j]); //preserve that values are unique
+                        .FirstOrDefault(x => x.Value == _currentSelectedLevelData.BlocksData[i, j]); //preserve that values are unique
 
                     if (colorKvp.Value!=BlockType.NONE)
                     {
@@ -181,10 +170,10 @@ namespace Editor
 
         private void CorrectLevelData() //make grid corrected to fit game conditions
         {
-            if (_currentSelectedLevelData.BlocksDatas.Length!=0)
+            if (_currentSelectedLevelData.BlocksData.Length!=0)
             {
-                var maxX = _currentSelectedLevelData.BlocksDatas.GetLength(0);
-                var maxY = _currentSelectedLevelData.BlocksDatas.GetLength(1);
+                var maxX = _currentSelectedLevelData.GridWidth;
+                var maxY = _currentSelectedLevelData.GridHeight;
             
                 _currentSelectedLevelData.AddData(maxX, maxY-1, BlockType.NONE); //add right side 1 cell
             }
@@ -194,9 +183,12 @@ namespace Editor
         {
             CorrectLevelData();
             string dataJson = JsonConvert.SerializeObject(_levelsData);
-            System.IO.File.WriteAllText(Application.dataPath+LEVELS_DATA_PATH, dataJson);
-            
-            AssetDatabase.Refresh();
+            EditorResourcesManager.CreateJson<LevelsData>(dataJson);
+        }
+
+        private void OnDisable()
+        {
+            Resources.UnloadUnusedAssets();
         }
     }
 }
