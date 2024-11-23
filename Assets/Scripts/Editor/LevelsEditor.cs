@@ -23,8 +23,8 @@ namespace Editor
     
         private Color _currentColor = Color.red;
         private Color[,]_colors = new Color[GRID_SIZE, GRID_SIZE];
-        private GridBlocksLevelData _currentSelectedLevelData;
-        private LevelsData _levelsData;
+        private LevelData _currentSelectedLevelData;
+        private LevelsDataContainer _levelsDataContainer;
 
         [MenuItem("Window/Levels Editor")]
         public static void ShowWindow()
@@ -57,13 +57,13 @@ namespace Editor
 
             if (GUILayout.Button("AddLevel", GUILayout.Width(150), GUILayout.Height(25)))
             {
-                _levelsData.AddNextLevelData();
-                SelectLevel(_levelsData.Data.Count-1);
+                _levelsDataContainer.AddNextLevelData();
+                SelectLevel(_levelsDataContainer.Data.Count-1);
             }
 
-            if (_levelsData.Data!=null)
+            if (_levelsDataContainer.Data!=null)
             {
-                foreach (var gridData in _levelsData.Data) //levels buttons
+                foreach (var gridData in _levelsDataContainer.Data) //levels buttons
                 {
                     if (GUILayout.Button(gridData.LevelId.ToString(), GUILayout.Height(25), GUILayout.Width(25)))
                     {
@@ -126,15 +126,15 @@ namespace Editor
         
         private void LoadLevelsData()
         {
-            LevelsData levelsData = EditorResourcesManager.LoadJsonDataAsset<LevelsData>();
-            if (levelsData==null)
+            LevelsDataContainer _levelsDataContainer = EditorResourcesManager.LoadJsonDataAsset<LevelsDataContainer>();
+            if (_levelsDataContainer==null)
             {
-                levelsData = new LevelsData();
-                var json =JsonConvert.SerializeObject(levelsData);
-                EditorResourcesManager.CreateJson<LevelsData>(json);
+                _levelsDataContainer = new LevelsDataContainer();
+                var json =JsonConvert.SerializeObject(_levelsDataContainer);
+                EditorResourcesManager.CreateJson<LevelsDataContainer>(json);
             }
-            _levelsData = levelsData;
-            if (_levelsData!=null && _levelsData.Data!=null)
+            this._levelsDataContainer = _levelsDataContainer;
+            if (this._levelsDataContainer!=null && this._levelsDataContainer.Data!=null)
             {
                 SelectLevel(0);
             }
@@ -143,12 +143,12 @@ namespace Editor
         private void SelectLevel(int id)
         {
             ResetGrid();
-            if (_levelsData.Data.Count==0)
+            if (_levelsDataContainer.Data.Count==0)
             {
                 return;
                
             }
-            _currentSelectedLevelData = _levelsData.Data[id];
+            _currentSelectedLevelData = _levelsDataContainer.Data[id];
 
             for (int i = 0; i < _currentSelectedLevelData.GridWidth; i++)
             {
@@ -181,8 +181,8 @@ namespace Editor
         private void SaveLevelsData()
         {
             CorrectLevelData();
-            string dataJson = JsonConvert.SerializeObject(_levelsData);
-            EditorResourcesManager.CreateJson<LevelsData>(dataJson);
+            string dataJson = JsonConvert.SerializeObject(_levelsDataContainer);
+            EditorResourcesManager.CreateJson<LevelsDataContainer>(dataJson);
         }
 
         private void OnDisable()

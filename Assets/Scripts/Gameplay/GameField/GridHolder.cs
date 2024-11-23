@@ -12,7 +12,8 @@ namespace Gameplay.GameField
 {
     public class GridHolder : MonoBehaviour
     {
-        public Dictionary<Vector2Int, GridCell> Cells { get; private set; }
+        public GridCell[,] Cells { get; private set; }
+
         private InputService _inputService;
         private Camera _camera;
 
@@ -31,7 +32,7 @@ namespace Gameplay.GameField
         
         public void Create(int width, int height, float cellSize)
         {
-            Cells = new Dictionary<Vector2Int, GridCell>();
+            Cells = new GridCell[width,height];
             
             for (int xCoord = 0; xCoord < width; xCoord++)
             {
@@ -51,8 +52,8 @@ namespace Gameplay.GameField
                     cell.transform.position = worldPos;
                     cell.transform.SetParent(transform);
                     cell.Initialize(coord);
-                    
-                    Cells.Add(coord,cell);
+
+                    Cells[xCoord, yCoord] = cell;
                 }
             }
         }
@@ -64,13 +65,69 @@ namespace Gameplay.GameField
 
             if (hit.collider!=null)
             {
+                var block = hit.collider.GetComponent<Block>();
+                SwipeBlockLogic(block, swipeDirection);
                 Debug.LogWarning(hit.transform.gameObject.name);
             }
         }
 
-        public void SetBlock(Block block, Vector2Int coord)
+        private void SwipeBlockLogic(Block fromBlock, SwipeDirection direction)
         {
-            Cells[coord].SetBlock(block);
+            var fromCell = Cells.Find((x) => x.CurrentBlock == fromBlock);
+            if (fromCell == null)
+            {
+                Debug.LogError("Invalid cell!");
+                return;
+            }
+
+            var toCoord = fromCell.Coord;
+            ProcessCoordByDirection(ref toCoord, direction);
+            
+            if (TryGetCell(toCoord, out GridCell toCell))
+            {
+                SwapCells(fromCell, toCell);
+                Debug.LogWarning($"Swapped from {fromCell.Coord.x}{fromCell.Coord.y} to {toCoord.x}{toCoord.y}");
+            }
+        }
+
+        private void SwapCells(GridCell cell1, GridCell cell2)
+        {
+            var cell1Block = cell1.CurrentBlock;
+            var cell2Block = cell2.CurrentBlock;
+            
+            cell1.SetBlock(cell2Block);
+            cell2.SetBlock(cell1Block);
+        }
+        
+        private void ProcessCoordByDirection(ref Vector2Int sourceCoord, SwipeDirection direction)
+        {
+            switch (direction)
+            {
+                case SwipeDirection.LEFT:
+                    sourceCoord.x -= 1;
+                    break;
+                case SwipeDirection.RIGHT:
+                    sourceCoord.x += 1;
+                    break;
+                case SwipeDirection.UP:
+                    sourceCoord.y += 1;
+                    break;
+                case SwipeDirection.DOWN:
+                    sourceCoord.y -= 1;
+                    break;
+            }
+        }
+
+        private bool TryGetCell(Vector2Int coord, out GridCell cell)
+        {
+            cell = null;
+            if (Cells.IsInBounds(coord.x,coord.y))
+            {
+                cell = Cells[coord.x, coord.y];
+                return true;
+            }
+
+            return false;
         }
 
 #if UNITY_EDITOR

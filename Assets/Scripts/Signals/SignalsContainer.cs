@@ -1,12 +1,14 @@
+using Gameplay.Levels.Data;
+
 namespace Signals
 {
     public struct GameplayStartedSignal
     {
-        public readonly int LevelId;
+        public readonly LevelData LevelData;
 
-        public GameplayStartedSignal(int levelId)
+        public GameplayStartedSignal(LevelData levelData)
         {
-            LevelId = levelId;
+            LevelData = levelData;
         }
     }
 }

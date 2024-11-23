@@ -3,7 +3,7 @@ using EasyButtons;
 using Gameplay.Blocks.Enums;
 using Gameplay.Factories;
 using Gameplay.Levels.Data;
-using Services;
+using Signals;
 using UnityEngine;
 using Utility;
 using Zenject;
@@ -15,21 +15,24 @@ namespace Gameplay.GameField
         [SerializeField] private BlocksSpawner _blocksSpawner;
         [SerializeField] private GridHolder _gridHolder;
         [SerializeField] private Transform _groundPoint;
-        private GridBlocksLevelData _levelData;
+        private LevelData _levelData;
+        private SignalBus _signalBus;
 
         [Inject]
-        public void Construct(ServicesHolder servicesHolder)
+        public void Construct(SignalBus signalBus)
         {
-#if UNITY_EDITOR
-            _levelData = EditorResourcesManager.LoadJsonDataAsset<LevelsData>().GetLevelData(0);
-#else
-            _levelData = servicesHolder.GetService<AssetsProviderService>().LoadJsonDataAsset<LevelsData>().GetLevelData(0);
-#endif
+            _signalBus = signalBus;
+        }
+
+        private void Awake()
+        {
+            _signalBus.Subscribe<GameplayStartedSignal>(Initialize);
         }
         
         [Button]
-        public void Initialize(GridBlocksLevelData levelData)
+        private void Initialize(GameplayStartedSignal signal)
         {
+            _levelData = signal.LevelData;
             _gridHolder.Create(_levelData.GridWidth, _levelData.GridHeight, Constants.CELL_SIZE);
             
             CreateBlocks();
@@ -39,15 +42,15 @@ namespace Gameplay.GameField
 
         private void CreateBlocks()
         {
-            foreach (var kvp in _gridHolder.Cells)
+            _gridHolder.Cells.ForEach((i,x, y) =>
             {
-                var blockType = _levelData.BlocksData[kvp.Key.x, kvp.Key.y];
+                var blockType = _levelData.BlocksData[x, y];
                 if (blockType!=BlockType.NONE)
                 {
-                    var block = _blocksSpawner.Spawn(blockType, kvp.Value.transform);
-                    kvp.Value.SetBlock(block);
+                    var block = _blocksSpawner.Spawn(blockType, i.transform);
+                    i.SetBlock(block);
                 }
-            }
+            });
         }
 
         private void SetGroundedOffset()
@@ -65,7 +68,7 @@ namespace Gameplay.GameField
             
             var targetX = screenLeft.x + .1f;
         
-            var leftCellX = _gridHolder.Cells.Values.Min(x => x.transform.position.x);
+            var leftCellX = _gridHolder.Cells.ToList().Min(x => x.transform.position.x);
             leftCellX -= Constants.CELL_SIZE / 2;
              
             var scale = _gridHolder.transform.localScale.x * (targetX / leftCellX);
@@ -82,9 +85,9 @@ namespace Gameplay.GameField
             }
 
             Gizmos.color = Color.green;
-            foreach (var kvp in _gridHolder.Cells)
+            foreach (var cell in _gridHolder.Cells)
             {
-                Gizmos.DrawSphere(kvp.Value.transform.position,0.1f);
+                Gizmos.DrawSphere(cell.transform.position,0.1f);
             }
         }
         

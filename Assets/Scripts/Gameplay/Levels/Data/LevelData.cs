@@ -6,7 +6,7 @@ using Utility;
 namespace Gameplay.Levels.Data
 {
     [Serializable]
-    public class GridBlocksLevelData
+    public class LevelData
     {
         [JsonIgnore] public int GridWidth => BlocksData.GetLength(0);
         [JsonIgnore] public int GridHeight => BlocksData.GetLength(1);
@@ -14,13 +14,13 @@ namespace Gameplay.Levels.Data
         public int LevelId;
         public BlockType[,] BlocksData;
         
-        public GridBlocksLevelData(int levelId)
+        public LevelData(int levelId)
         {
             LevelId = levelId;
             BlocksData = new BlockType[0,0];
         }
 
-        public GridBlocksLevelData()
+        public LevelData()
         {
             BlocksData = new BlockType[0,0];
         }

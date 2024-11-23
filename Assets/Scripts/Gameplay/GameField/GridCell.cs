@@ -5,17 +5,27 @@ namespace Gameplay.GameField
 {
     public class GridCell : MonoBehaviour
     {
-        private Vector2Int _coord;
-        private Block _currentBlock;
+        public Vector2Int Coord { get; private set; }
+        public Block CurrentBlock { get; private set; }
 
         public void Initialize(Vector2Int coord)
         {
-            _coord = coord;
+            Coord = coord;
         }
 
         public void SetBlock(Block block)
         {
-            _currentBlock = block;
+            CurrentBlock = block;
+            if (block!=null)
+            {
+                CurrentBlock.transform.SetParent(transform);
+                CurrentBlock.transform.localPosition = Vector3.zero;
+            }
         }
+
+        // public void Clear()
+        // {
+        //     CurrentBlock = null;
+        // }
     }
 }

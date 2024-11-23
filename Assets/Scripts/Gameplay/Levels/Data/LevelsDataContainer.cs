@@ -5,33 +5,33 @@ using System.Linq;
 namespace Gameplay.Levels.Data
 {
     [Serializable]
-    public class LevelsData
+    public class LevelsDataContainer
     {
-        public readonly List<GridBlocksLevelData> Data;
+        public readonly List<LevelData> Data;
 
-        public LevelsData(List<GridBlocksLevelData> data)
+        public LevelsDataContainer(List<LevelData> data)
         {
             Data = data;
         }
 
-        public LevelsData()
+        public LevelsDataContainer()
         {
-            Data = new List<GridBlocksLevelData>();
+            Data = new List<LevelData>();
         }
 
-        public GridBlocksLevelData GetLevelData(int levelId)
+        public LevelData GetLevelData(int levelId)
         {
             return Data.FirstOrDefault(x => x.LevelId == levelId);
         }
         
-        public GridBlocksLevelData AddNextLevelData()
+        public LevelData AddNextLevelData()
         {
-            var newData = new GridBlocksLevelData(Data.Count);
+            var newData = new LevelData(Data.Count);
             Data.Add(newData);
             return newData;
         }
         
-        public void AddLevelData(GridBlocksLevelData data)
+        public void AddLevelData(LevelData data)
         {
             if (Data.Any(x=>x.LevelId==data.LevelId))
             {
