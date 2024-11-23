@@ -1,10 +1,13 @@
 using Gameplay.Blocks;
+using Gameplay.Blocks.Enums;
 using UnityEngine;
 
 namespace Gameplay.GameField
 {
     public class GridCell : MonoBehaviour
     {
+        public BlockType RelatedBlockType => CurrentBlock == null ? BlockType.NONE : CurrentBlock.Type;
+        
         public Vector2Int Coord { get; private set; }
         public Block CurrentBlock { get; private set; }
 
@@ -23,9 +26,10 @@ namespace Gameplay.GameField
             }
         }
 
-        // public void Clear()
-        // {
-        //     CurrentBlock = null;
-        // }
+        public void Clear()
+        {
+            CurrentBlock.DestroyBlock();
+            CurrentBlock = null;
+        }
     }
 }
