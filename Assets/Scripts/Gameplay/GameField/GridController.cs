@@ -20,6 +20,7 @@ namespace Gameplay.GameField
         
         private readonly Camera _camera;
         private InputService _inputService;
+        private GridCell _lastPerformedCell; //used to track last cell that started animations to receive callbacks when its finished
         
         public GridController(GridCell[,] cells)
         {
@@ -31,22 +32,48 @@ namespace Gameplay.GameField
         public void Construct(ServicesHolder servicesHolder)
         {
             _inputService = servicesHolder.GetService<InputService>();
-            _inputService.SwipePerformed += OnSwipePerformed;
+            _inputService.SwipePerformed += OnInputSwipePerformed;
         }
         
-        public void HandleMatches()
+        private void OnSwap()
         {
-            var matchCells = FindMatchesCells();
-            matchCells.ForEach(cell =>
+            _lastPerformedCell.BlockMovementFinished -= OnSwap;
+
+            if (TryBlocksFalling()==false)
             {
-                cell.Clear();
-            });
+                HandleMatches();
+            }
+        }
+        
+        private void HandleMatches()
+        {
+            var matchCells = FindMatchedCells();
+            if (matchCells.Count>0)
+            {
+                var lastCell = matchCells[^1];
+                
+                _lastPerformedCell.BlockDestroyFinished -= OnBlocksDestroyed;
+                _lastPerformedCell = lastCell;
+                _lastPerformedCell.BlockDestroyFinished += OnBlocksDestroyed;
+                
+                matchCells.ForEach(cell =>
+                {
+                    cell.Clear();
+                });
+            }
+        }
+        
+        private void OnBlocksDestroyed()
+        {
+            _lastPerformedCell.BlockDestroyFinished -= OnBlocksDestroyed;
+            TryBlocksFalling();
         }
 
 #region FALLING
 
-        public void HandleFalling()
+        private bool TryBlocksFalling()
         {
+            var fallingPerformed = false;
             for (int xCoord = 0; xCoord < _xMax; xCoord++)
             {
                 var lowestEmptyCellY = FindLowestEmptyCellY(xCoord);
@@ -62,10 +89,17 @@ namespace Gameplay.GameField
                 for (int yCoord = lowestFilledCellY; yCoord < _yMax; yCoord++)
                 {
                     var fromCell = _cells[xCoord, yCoord];
+                    if (fromCell.IsEmpty)
+                    {
+                        continue;
+                    }
                     var toCell = _cells[xCoord, yCoord - offset];
                     SwapCells(fromCell,toCell);
+                    fallingPerformed = true;
                 }
             }
+
+            return fallingPerformed;
         }
         
         private int FindLowestEmptyCellY(int x)
@@ -93,7 +127,7 @@ namespace Gameplay.GameField
         
 #region SWIPE AND SWAP
 
-         private void OnSwipePerformed(Vector3 screenStartPos, SwipeDirection swipeDirection)
+         private void OnInputSwipePerformed(Vector3 screenStartPos, SwipeDirection swipeDirection)
         {
             var worldPos = (Vector2) _camera.ScreenToWorldPoint(screenStartPos);
             var hit = Physics2D.Raycast(worldPos,Vector2.zero, 1f ,layerMask:~Constants.Layers.BLOCK);
@@ -117,13 +151,10 @@ namespace Gameplay.GameField
             var toCoord = fromCell.Coord;
             ProcessCoordByDirection(ref toCoord, direction);
             
-            if (TryGetCell(toCoord, out GridCell toCell))
+            if (TryGetNotBusyCell(toCoord, out GridCell toCell) 
+                && (direction==SwipeDirection.UP && toCell.IsEmpty)==false)
             {
                 SwapCells(fromCell, toCell);
-                if (toCell.IsEmpty==false) //matches if only cell was not empty
-                {
-                   // HandleMatches();
-                }
                 Debug.LogWarning($"Swapped from {fromCell.Coord.x}{fromCell.Coord.y} to {toCoord.x}{toCoord.y}");
             }
         }
@@ -133,8 +164,15 @@ namespace Gameplay.GameField
             var cell1Block = cell1.CurrentBlock;
             var cell2Block = cell2.CurrentBlock;
             
-            cell1.SetBlock(cell2Block);
-            cell2.SetBlock(cell1Block);
+            if (_lastPerformedCell!=null)
+            {
+                _lastPerformedCell.BlockMovementFinished -= OnSwap;
+            }
+            _lastPerformedCell = cell2;
+            _lastPerformedCell.BlockMovementFinished += OnSwap;
+            
+            cell1.SetBlock(cell2Block, true);
+            cell2.SetBlock(cell1Block, true);
         }
         
         private void ProcessCoordByDirection(ref Vector2Int sourceCoord, SwipeDirection direction)
@@ -156,13 +194,17 @@ namespace Gameplay.GameField
             }
         }
 
-        private bool TryGetCell(Vector2Int coord, out GridCell cell)
+        private bool TryGetNotBusyCell(Vector2Int coord, out GridCell cell)
         {
             cell = null;
             if (_cells.IsInBounds(coord.x,coord.y))
             {
-                cell = _cells[coord.x, coord.y];
-                return true;
+                var targetCell =_cells[coord.x, coord.y];
+                if (targetCell.IsBusy==false)
+                {
+                    cell = targetCell;
+                    return true;
+                }
             }
 
             return false;
@@ -173,7 +215,7 @@ namespace Gameplay.GameField
         
 #region MATCH CHECK
 
-        private List<GridCell> FindMatchesCells()
+        private List<GridCell> FindMatchedCells()
         {
             var matches = new List<GridCell>();
             var visited = new bool[_xMax, _yMax];
@@ -184,7 +226,7 @@ namespace Gameplay.GameField
                 {
                     var match = FloodFillMatch(new Vector2Int(x,y), _cells[x, y].RelatedBlockType, visited);
                         
-                    if (match!=null&&match.Count >= 3)
+                    if (match!=null&&match.Count >= Constants.BLOCKS_MATCH_COUNT)
                     {
                         matches.AddRange(match);
                     }
@@ -208,8 +250,7 @@ namespace Gameplay.GameField
                 var targetX = targetElementCoord.x;
                 var targetY = targetElementCoord.y;
         
-                if (targetX < 0 || targetX >= _xMax || 
-                    targetY < 0 || targetY >= _yMax || 
+                if (_cells.IsInBounds(targetX,targetY)==false ||
                     visited[targetX, targetY] ||
                     _cells[targetX,targetY].IsEmpty ||
                     _cells[targetX,targetY].RelatedBlockType != blockType)
@@ -230,8 +271,8 @@ namespace Gameplay.GameField
         
         private List<GridCell> GetContinuousMatches(List<GridCell> matches)
         {
-            if (matches.GroupBy(cell=>cell.Coord.x).Any(group=>group.Count()>=3) ||
-                matches.GroupBy(cell=>cell.Coord.y).Any(group=>group.Count()>=3))
+            if (matches.GroupBy(cell=>cell.Coord.x).Any(group=>group.Count()>=Constants.BLOCKS_MATCH_COUNT) ||
+                matches.GroupBy(cell=>cell.Coord.y).Any(group=>group.Count()>=Constants.BLOCKS_MATCH_COUNT))
             {
                 return matches;
             }
@@ -264,7 +305,13 @@ namespace Gameplay.GameField
         
         public void Dispose()
         {
-            _inputService.SwipePerformed -= OnSwipePerformed;
+            _inputService.SwipePerformed -= OnInputSwipePerformed;
+            if (_lastPerformedCell!=null)
+            {
+                _lastPerformedCell.BlockMovementFinished -= OnSwap;
+                _lastPerformedCell.BlockDestroyFinished -= OnBlocksDestroyed;
+                _lastPerformedCell = null;
+            }
         }
     }
 }

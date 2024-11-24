@@ -48,7 +48,7 @@ namespace Gameplay.GameField
                 if (blockType!=BlockType.NONE)
                 {
                     var block = _blocksSpawner.Spawn(blockType, i.transform);
-                    i.SetBlock(block);
+                    i.SetBlock(block, false);
                 }
             });
         }

@@ -4,12 +4,12 @@ using UnityEngine;
 
 namespace Gameplay.Factories
 {
-    public class BlocksSpawner : MonoBehaviour //factory?
+    public class BlocksSpawner : MonoBehaviour
     {
         [SerializeField] private Block _blockPrefab;
         [SerializeField] private BlocksConfig _config;
         
-        public Block Spawn(BlockType blockType, Transform parent)
+        public Block Spawn(BlockType blockType, Transform parent) //TODO Pool?
         {
             var blockViewData = _config.GetBlockViewData(blockType);
 

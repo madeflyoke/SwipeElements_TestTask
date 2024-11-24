@@ -46,18 +46,6 @@ namespace Gameplay.GameField
             _gridController = ProjectContext.Instance.Container.Instantiate<GridController>(new object[]{Cells});
         }
 
-        [Button]
-        private void Match()
-        {
-            _gridController.HandleMatches();
-        }
-
-        [Button]
-        private void Fall()
-        {
-            _gridController.HandleFalling();
-        }
-        
         public void OnDisable()
         {
             _gridController?.Dispose();
