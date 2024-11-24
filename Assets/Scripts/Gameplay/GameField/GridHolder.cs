@@ -51,6 +51,12 @@ namespace Gameplay.GameField
         {
             _gridController.HandleMatches();
         }
+
+        [Button]
+        private void Fall()
+        {
+            _gridController.HandleFalling();
+        }
         
         public void OnDisable()
         {

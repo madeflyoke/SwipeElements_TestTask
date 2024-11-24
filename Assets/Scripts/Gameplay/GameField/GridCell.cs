@@ -6,8 +6,8 @@ namespace Gameplay.GameField
 {
     public class GridCell : MonoBehaviour
     {
-        public BlockType RelatedBlockType => CurrentBlock == null ? BlockType.NONE : CurrentBlock.Type;
-        
+        public BlockType RelatedBlockType => IsEmpty? BlockType.NONE : CurrentBlock.Type;
+        public bool IsEmpty => CurrentBlock == null;
         public Vector2Int Coord { get; private set; }
         public Block CurrentBlock { get; private set; }
 

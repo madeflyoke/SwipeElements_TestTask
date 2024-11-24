@@ -14,7 +14,7 @@ namespace Gameplay.GameField
 {
     public class GridController : IDisposable
     {
-        private GridCell[,] _cells;
+        private readonly GridCell[,] _cells; //cells never moved, we control actual Blocks inside of them
         private int _xMax => _cells.GetLength(0);
         private int _yMax=> _cells.GetLength(1);
         
@@ -43,8 +43,55 @@ namespace Gameplay.GameField
             });
         }
 
+#region FALLING
+
+        public void HandleFalling()
+        {
+            for (int xCoord = 0; xCoord < _xMax; xCoord++)
+            {
+                var lowestEmptyCellY = FindLowestEmptyCellY(xCoord);
+                var lowestFilledCellY = FindLowestFilledCellY(xCoord, lowestEmptyCellY);
+
+                if (lowestEmptyCellY==-1 || lowestFilledCellY==-1)
+                {
+                    continue;
+                }
         
-        #region SWIPE AND SWAP
+                var offset = lowestFilledCellY - lowestEmptyCellY;
+                
+                for (int yCoord = lowestFilledCellY; yCoord < _yMax; yCoord++)
+                {
+                    var fromCell = _cells[xCoord, yCoord];
+                    var toCell = _cells[xCoord, yCoord - offset];
+                    SwapCells(fromCell,toCell);
+                }
+            }
+        }
+        
+        private int FindLowestEmptyCellY(int x)
+        {
+            for (int y = 0; y < _yMax; y++)
+            {
+                if (_cells[x, y].IsEmpty)
+                    return y;
+            }
+            return -1;
+        }
+
+        private int FindLowestFilledCellY(int x, int startY)
+        {
+            for (int y = startY + 1; y < _yMax; y++)
+            {
+                if (_cells[x, y].IsEmpty==false)
+                    return y;
+            }
+            return -1;
+        }
+
+#endregion
+
+        
+#region SWIPE AND SWAP
 
          private void OnSwipePerformed(Vector3 screenStartPos, SwipeDirection swipeDirection)
         {
@@ -73,7 +120,7 @@ namespace Gameplay.GameField
             if (TryGetCell(toCoord, out GridCell toCell))
             {
                 SwapCells(fromCell, toCell);
-                if (toCell.RelatedBlockType!=BlockType.NONE) //matches if only cell was not empty
+                if (toCell.IsEmpty==false) //matches if only cell was not empty
                 {
                    // HandleMatches();
                 }
@@ -121,10 +168,10 @@ namespace Gameplay.GameField
             return false;
         }
 
-        #endregion
+#endregion
        
         
-        #region MATCH CHECK
+#region MATCH CHECK
 
         private List<GridCell> FindMatchesCells()
         {
@@ -133,7 +180,7 @@ namespace Gameplay.GameField
 
             _cells.ForEach((cell, x, y) =>
             {
-                if (visited[x, y]==false && cell.RelatedBlockType!=BlockType.NONE)
+                if (visited[x, y]==false && cell.IsEmpty==false)
                 {
                     var match = FloodFillMatch(new Vector2Int(x,y), _cells[x, y].RelatedBlockType, visited);
                         
@@ -164,7 +211,7 @@ namespace Gameplay.GameField
                 if (targetX < 0 || targetX >= _xMax || 
                     targetY < 0 || targetY >= _yMax || 
                     visited[targetX, targetY] ||
-                    _cells[targetX,targetY].RelatedBlockType == BlockType.NONE ||
+                    _cells[targetX,targetY].IsEmpty ||
                     _cells[targetX,targetY].RelatedBlockType != blockType)
                     continue;
 
@@ -213,7 +260,7 @@ namespace Gameplay.GameField
         // }
 
 
-        #endregion
+#endregion
         
         public void Dispose()
         {
