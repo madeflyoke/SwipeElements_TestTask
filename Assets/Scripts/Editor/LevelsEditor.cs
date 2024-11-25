@@ -27,9 +27,9 @@ namespace Editor
         
         private BlockType _selectedBlockType;
         private LevelData _selectedLevelData;
-        private LevelsSectionDataContainer _selectedLevelsSectionDataContainer;
+        private SectionDataContainer _selectedSectionDataContainer;
         
-        private List<LevelsSectionDataContainer> _allLevelsSectionsDataContainers;
+        private List<SectionDataContainer> _allLevelsSectionsDataContainers;
 
         private LevelSection _selectedLevelSection;
         private int _selectedLevelId;
@@ -61,15 +61,15 @@ namespace Editor
 
             if (GUILayout.Button("AddLevel", GUILayout.Width(150), GUILayout.Height(25)))
             {
-                _selectedLevelsSectionDataContainer.AddNextLevelData_Editor();
-                SelectLevel(_selectedLevelsSectionDataContainer.Data.Count-1);
+                _selectedSectionDataContainer.AddNextLevelData_Editor();
+                SelectLevel(_selectedSectionDataContainer.Data.Count-1);
             }
 
-            if (_selectedLevelsSectionDataContainer.Data!=null)
+            if (_selectedSectionDataContainer.Data!=null)
             {
-                for (var index = 0; index < _selectedLevelsSectionDataContainer.Data.Count; index++)
+                for (var index = 0; index < _selectedSectionDataContainer.Data.Count; index++)
                 {
-                    var gridData = _selectedLevelsSectionDataContainer.Data[index];
+                    var gridData = _selectedSectionDataContainer.Data[index];
                     GUI.backgroundColor = _selectedLevelId == index ? Color.green : Color.gray;
                     
                     if (GUILayout.Button(gridData.LevelId.ToString(), GUILayout.Height(25), GUILayout.Width(25)))
@@ -137,7 +137,7 @@ namespace Editor
             if (_selectedLevelSection!=section)
             {
                 _selectedLevelSection = section;
-                _selectedLevelsSectionDataContainer =
+                _selectedSectionDataContainer =
                     _allLevelsSectionsDataContainers.FirstOrDefault(x => x.Section == section);
                 SelectLevel(0);
             }
@@ -147,13 +147,13 @@ namespace Editor
         {
             ResetGrid();
 
-            if (_selectedLevelsSectionDataContainer.Data==null ||
-                _selectedLevelsSectionDataContainer.Data.Count==0 )
+            if (_selectedSectionDataContainer.Data==null ||
+                _selectedSectionDataContainer.Data.Count==0 )
             {
                 return;
             }
             
-            _selectedLevelData = _selectedLevelsSectionDataContainer.Data[id];
+            _selectedLevelData = _selectedSectionDataContainer.Data[id];
 
             for (int i = 0; i < _selectedLevelData.GridWidth; i++)
             {
@@ -177,26 +177,41 @@ namespace Editor
             {
                 var maxX = _selectedLevelData.GridWidth;
                 var maxY = _selectedLevelData.GridHeight;
-            
-                _selectedLevelData.AddData_Editor(maxX, maxY-1, BlockType.NONE); //add right side 1 cell
+
+                var lastColumnEmpty = true;
+                
+                for (int yCoord = 0; yCoord < _selectedLevelData.GridHeight; yCoord++)
+                {
+                    if (_selectedLevelData.BlocksData[_selectedLevelData.GridWidth-1, yCoord]!=BlockType.NONE)
+                    {
+                        lastColumnEmpty = false;
+                        break;
+                    }
+                }
+
+                if (lastColumnEmpty==false)
+                {
+                    _selectedLevelData.AddData_Editor(maxX, maxY-1, BlockType.NONE); //add right side 1 cell
+                }
             }
         }
         
         private void LoadLevelsData()
         {
-            _allLevelsSectionsDataContainers = new List<LevelsSectionDataContainer>();
+            _allLevelsSectionsDataContainers = new List<SectionDataContainer>();
 
             foreach (var value in Enum.GetNames(typeof(LevelSection)).Skip(1))
             {
-                var targetName = StringHelpers.BuildDataNameByType<LevelsSectionDataContainer>(value);
+                var targetName = StringHelpers.BuildDataNameByType<SectionDataContainer>(value);
                 
-                var levelsSectionDataContainer = EditorResourcesManager.LoadJsonDataAsset<LevelsSectionDataContainer>(targetName);
+                var levelsSectionDataContainer = EditorResourcesManager.LoadJsonDataAsset<SectionDataContainer>(targetName);
                 if (levelsSectionDataContainer==null)
                 {
-                    levelsSectionDataContainer = new LevelsSectionDataContainer
+                    levelsSectionDataContainer = new SectionDataContainer
                     {
                         Section = Enum.Parse<LevelSection>(value)
                     };
+                    Debug.LogWarning("<color=green>Its expected, creating new json data...</color>");
                     var json =JsonConvert.SerializeObject(levelsSectionDataContainer);
                     EditorResourcesManager.CreateJson(targetName,json);
                 }
@@ -214,10 +229,10 @@ namespace Editor
         private void SaveLevelsData()
         {
             CorrectLevelData();
-            var targetName = StringHelpers.BuildDataNameByType<LevelsSectionDataContainer>(
-                _selectedLevelsSectionDataContainer.Section.ToString());
+            var targetName = StringHelpers.BuildDataNameByType<SectionDataContainer>(
+                _selectedSectionDataContainer.Section.ToString());
             
-            string dataJson = JsonConvert.SerializeObject(_selectedLevelsSectionDataContainer);
+            string dataJson = JsonConvert.SerializeObject(_selectedSectionDataContainer);
             EditorResourcesManager.CreateJson(targetName, dataJson);
         }
 

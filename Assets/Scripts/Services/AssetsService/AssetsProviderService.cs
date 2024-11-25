@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
@@ -22,11 +21,11 @@ namespace Services.AssetsService
             return UniTask.CompletedTask;
         }
 
-        public LevelsSectionDataContainer LoadLevelsSectionDataContainer(LevelSection section)
+        public SectionDataContainer LoadLevelsSectionDataContainer(LevelSection section)
         {
             var postfix = section.ToString();
-            var dataName = StringHelpers.BuildDataNameByType<LevelsSectionDataContainer>(postfix);
-            return LoadJsonDataAsset<LevelsSectionDataContainer>(dataName);
+            var dataName = StringHelpers.BuildDataNameByType<SectionDataContainer>(postfix);
+            return LoadJsonDataAsset<SectionDataContainer>(dataName);
         }
         
         private T LoadJsonDataAsset<T>(string dataName) where T: class

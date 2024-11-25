@@ -6,17 +6,17 @@ using Gameplay.Levels.Enums;
 namespace Gameplay.Levels.Data
 {
     [Serializable]
-    public class LevelsSectionDataContainer
+    public class SectionDataContainer
     {
         public LevelSection Section;
         public readonly List<LevelData> Data;
 
-        public LevelsSectionDataContainer(List<LevelData> data)
+        public SectionDataContainer(List<LevelData> data)
         {
             Data = data;
         }
 
-        public LevelsSectionDataContainer()
+        public SectionDataContainer()
         {
             Data = new List<LevelData>();
         }
