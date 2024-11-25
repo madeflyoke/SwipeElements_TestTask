@@ -1,4 +1,4 @@
-namespace Services.InputService.Enums
+namespace Services.Input.Enums
 {
     public enum SwipeDirection
     {

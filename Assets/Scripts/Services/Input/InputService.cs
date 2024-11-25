@@ -1,13 +1,13 @@
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using Services.InputService.Enums;
+using Services.Input.Enums;
 using Services.Interfaces;
 using Signals;
 using UnityEngine;
 using Zenject;
 
-namespace Services.InputService
+namespace Services.Input
 {
     public class InputService : IService
     {

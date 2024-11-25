@@ -1,12 +1,4 @@
-using System;
-using System.Collections.Generic;
-using EasyButtons;
-using Gameplay.Blocks;
-using Services;
-using Services.InputService;
-using Services.InputService.Enums;
 using UnityEngine;
-using Utility;
 using Zenject;
 
 namespace Gameplay.GameField

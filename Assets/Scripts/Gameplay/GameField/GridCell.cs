@@ -13,10 +13,10 @@ namespace Gameplay.GameField
         
         public BlockType RelatedBlockType => IsEmpty? BlockType.NONE : CurrentBlock.Type;
         public bool IsEmpty => CurrentBlock == null;
+        
         public Vector2Int Coord { get; private set; }
         public Block CurrentBlock { get; private set; }
         public bool IsBusy { get; private set; }
-        private Tween _movingTween;
         
         public void Initialize(Vector2Int coord)
         {
@@ -31,14 +31,9 @@ namespace Gameplay.GameField
                 if (animated)
                 {
                     IsBusy = true;
-                    block.SetBusy(true);
-                    _movingTween = block.transform.DOMove(transform.position, 3f)
-                        //.SetEase(Ease.OutElastic,amplitude:0.05f,period:0.25f) //TODO Config
-                        .SetEase(Ease.Linear)
-                        .OnComplete(() =>
+                    block.MoveTo(transform.position, () =>
                     {
                         CurrentBlock.transform.SetParent(transform);
-                        block.SetBusy(false);
                         IsBusy = false;
                         BlockMovementFinished?.Invoke();
                     });
@@ -56,11 +51,6 @@ namespace Gameplay.GameField
             CurrentBlock.DestroyBlock();
             CurrentBlock = null;
             BlockDestroyFinished?.Invoke();
-        }
-
-        private void OnDisable()
-        {
-            _movingTween?.Kill();
         }
     }
 }

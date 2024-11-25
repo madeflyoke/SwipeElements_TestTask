@@ -25,7 +25,8 @@ namespace Gameplay.Levels.Data
             BlocksData = new BlockType[0,0];
         }
 
-        public void AddData(int xCoord, int yCoord, BlockType type)
+#if UNITY_EDITOR
+        public void AddData_Editor(int xCoord, int yCoord, BlockType type)
         {
             BlockType[,] newArray = null;
             
@@ -54,9 +55,10 @@ namespace Gameplay.Levels.Data
             BlocksData[xCoord, yCoord] = type;
         }
 
-        public void ClearData()
+        public void ClearData_Editor()
         {
             BlocksData = new BlockType[0, 0];
         }
+#endif
     }
 }

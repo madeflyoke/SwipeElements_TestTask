@@ -4,8 +4,8 @@ using System.Linq;
 using Gameplay.Blocks;
 using Gameplay.Blocks.Enums;
 using Services;
-using Services.InputService;
-using Services.InputService.Enums;
+using Services.Input;
+using Services.Input.Enums;
 using UnityEngine;
 using Utility;
 using Zenject;
@@ -147,7 +147,7 @@ namespace Gameplay.GameField
                 Debug.LogError("Invalid cell!");
                 return;
             }
-
+            
             var toCoord = fromCell.Coord;
             ProcessCoordByDirection(ref toCoord, direction);
             

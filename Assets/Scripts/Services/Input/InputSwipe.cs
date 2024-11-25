@@ -1,9 +1,10 @@
 using System;
-using Services.InputService.Enums;
+using Services.Input.Enums;
 using UniRx;
 using UnityEngine;
+using Input = UnityEngine.Input;
 
-namespace Services.InputService
+namespace Services.Input
 {
     public class InputSwipe : IDisposable
     {
@@ -32,17 +33,17 @@ namespace Services.InputService
 
         private void ManualUpdate()
         {
-            if (Input.GetMouseButtonDown(0))
+            if (UnityEngine.Input.GetMouseButtonDown(0))
             {
-                _startPosition =Input.mousePosition;
+                _startPosition =UnityEngine.Input.mousePosition;
                 _startTime = Time.time;
                 _isDragging = true;
             }
 
-            if (Input.GetMouseButtonUp(0) && _isDragging)
+            if (UnityEngine.Input.GetMouseButtonUp(0) && _isDragging)
             {
                 _isDragging = false;
-                Vector2 endPosition = Input.mousePosition;
+                Vector2 endPosition = UnityEngine.Input.mousePosition;
                 var endTime = Time.time;
 
                 if (endTime - _startTime <= _maxSwipeTime)
