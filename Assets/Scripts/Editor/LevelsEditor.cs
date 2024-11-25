@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using Gameplay.Blocks.Enums;
 using Gameplay.Levels.Data;
+using Gameplay.Levels.Enums;
 using Newtonsoft.Json;
 using UnityEditor;
 using UnityEngine;
@@ -17,14 +17,22 @@ namespace Editor
     
         private readonly Dictionary<Color, BlockType> _blockTypesByColors = new Dictionary<Color, BlockType>()
         {
+            {Color.clear, BlockType.NONE},
             {Color.red, BlockType.FIRE},
             {Color.blue, BlockType.WATER},
         };
-    
-        private Color _currentColor = Color.red;
+
         private Color[,]_colors = new Color[GRID_SIZE, GRID_SIZE];
-        private LevelData _currentSelectedLevelData;
-        private LevelsDataContainer _levelsDataContainer;
+        private Color _selectedColor = Color.red;
+        
+        private BlockType _selectedBlockType;
+        private LevelData _selectedLevelData;
+        private LevelsSectionDataContainer _selectedLevelsSectionDataContainer;
+        
+        private List<LevelsSectionDataContainer> _allLevelsSectionsDataContainers;
+
+        private LevelSection _selectedLevelSection;
+        private int _selectedLevelId;
 
         [MenuItem("Window/Levels Editor")]
         public static void ShowWindow()
@@ -40,36 +48,36 @@ namespace Editor
         private void OnGUI()
         {
             var rect = new Rect(position.width -25f, 0, 25, 25); //current color
-            EditorGUI.DrawRect(rect, _currentColor);
+            EditorGUI.DrawRect(rect, _selectedColor);
             
             EditorGUILayout.BeginHorizontal();
-            foreach (var kvp in _blockTypesByColors) //color select buttons
-            {
-                var guiStyle = new GUIStyle();
-                guiStyle.normal.textColor = _currentColor == kvp.Key ? Color.green : Color.white;
-                guiStyle.alignment = TextAnchor.MiddleCenter;
-                
-                if (GUILayout.Button(kvp.Value.ToString(), guiStyle, GUILayout.Height(25), GUILayout.Width(100)))
-                {
-                    _currentColor = kvp.Key;
-                }
-            }
+
+            _selectedBlockType = (BlockType)EditorGUILayout.EnumPopup("Block Type", _selectedBlockType, GUILayout.Width(250),
+                GUILayout.Height(25));
+            _selectedColor =_blockTypesByColors.FirstOrDefault(x => x.Value == _selectedBlockType).Key;
+            
+            SelectSection((LevelSection)EditorGUILayout.EnumPopup("Level Section", _selectedLevelSection, GUILayout.Width(250),
+            GUILayout.Height(25)));
 
             if (GUILayout.Button("AddLevel", GUILayout.Width(150), GUILayout.Height(25)))
             {
-                _levelsDataContainer.AddNextLevelData();
-                SelectLevel(_levelsDataContainer.Data.Count-1);
+                _selectedLevelsSectionDataContainer.AddNextLevelData_Editor();
+                SelectLevel(_selectedLevelsSectionDataContainer.Data.Count-1);
             }
 
-            if (_levelsDataContainer.Data!=null)
+            if (_selectedLevelsSectionDataContainer.Data!=null)
             {
-                foreach (var gridData in _levelsDataContainer.Data) //levels buttons
+                for (var index = 0; index < _selectedLevelsSectionDataContainer.Data.Count; index++)
                 {
+                    var gridData = _selectedLevelsSectionDataContainer.Data[index];
+                    GUI.backgroundColor = _selectedLevelId == index ? Color.green : Color.gray;
+                    
                     if (GUILayout.Button(gridData.LevelId.ToString(), GUILayout.Height(25), GUILayout.Width(25)))
                     {
                         SelectLevel(gridData.LevelId);
                     }
                 }
+                GUI.backgroundColor = Color.white;
             }
             
             EditorGUILayout.EndHorizontal();
@@ -77,10 +85,10 @@ namespace Editor
             if (GUILayout.Button("ClearAll"))
             {
                 ResetGrid();
-                _currentSelectedLevelData?.ClearData();
+                _selectedLevelData?.ClearData_Editor();
             }
 
-            if (_currentSelectedLevelData!=null)
+            if (_selectedLevelData!=null)
             {
                 DrawGrid();
             }
@@ -107,8 +115,8 @@ namespace Editor
                 
                     if (GUILayout.Button($"{xPos}:{normalizedYPos}", GUILayout.MaxWidth(45), GUILayout.MaxHeight(45)))
                     {
-                        _colors[xPos, yPos] = _currentColor;
-                        _currentSelectedLevelData.AddData(xPos,normalizedYPos, _blockTypesByColors[_currentColor]);
+                        _colors[xPos, yPos] = _selectedColor;
+                        _selectedLevelData.AddData_Editor(xPos,normalizedYPos, _blockTypesByColors[_selectedColor]);
                     }
                 }
 
@@ -123,66 +131,94 @@ namespace Editor
         {
             _colors = new Color[GRID_SIZE, GRID_SIZE];
         }
-        
-        private void LoadLevelsData()
+
+        private void SelectSection(LevelSection section)
         {
-            LevelsDataContainer _levelsDataContainer = EditorResourcesManager.LoadJsonDataAsset<LevelsDataContainer>();
-            if (_levelsDataContainer==null)
+            if (_selectedLevelSection!=section)
             {
-                _levelsDataContainer = new LevelsDataContainer();
-                var json =JsonConvert.SerializeObject(_levelsDataContainer);
-                EditorResourcesManager.CreateJson<LevelsDataContainer>(json);
-            }
-            this._levelsDataContainer = _levelsDataContainer;
-            if (this._levelsDataContainer!=null && this._levelsDataContainer.Data!=null)
-            {
+                _selectedLevelSection = section;
+                _selectedLevelsSectionDataContainer =
+                    _allLevelsSectionsDataContainers.FirstOrDefault(x => x.Section == section);
                 SelectLevel(0);
             }
         }
-
+        
         private void SelectLevel(int id)
         {
             ResetGrid();
-            if (_levelsDataContainer.Data.Count==0)
+
+            if (_selectedLevelsSectionDataContainer.Data==null ||
+                _selectedLevelsSectionDataContainer.Data.Count==0 )
             {
                 return;
-               
             }
-            _currentSelectedLevelData = _levelsDataContainer.Data[id];
+            
+            _selectedLevelData = _selectedLevelsSectionDataContainer.Data[id];
 
-            for (int i = 0; i < _currentSelectedLevelData.GridWidth; i++)
+            for (int i = 0; i < _selectedLevelData.GridWidth; i++)
             {
-                for (int j = 0; j < _currentSelectedLevelData.GridHeight; j++)
+                for (int j = 0; j < _selectedLevelData.GridHeight; j++)
                 {
                     var colorKvp = _blockTypesByColors
-                        .FirstOrDefault(x => x.Value == _currentSelectedLevelData.BlocksData[i, j]); //preserve that values are unique
+                        .FirstOrDefault(x => x.Value == _selectedLevelData.BlocksData[i, j]); //preserve that values are unique
 
-                    if (colorKvp.Value!=BlockType.NONE)
-                    {
-                        var posX = Mathf.Abs(i);
-                        var posY = Mathf.Abs(j-(GRID_SIZE - 1));
-                        _colors[posX, posY] = colorKvp.Key;
-                    }
+                    var posX = Mathf.Abs(i);
+                    var posY = Mathf.Abs(j-(GRID_SIZE - 1));
+                    _colors[posX, posY] = colorKvp.Key;
                 }
             }
+
+            _selectedLevelId = id;
         }
 
         private void CorrectLevelData() //make grid corrected to fit game conditions
         {
-            if (_currentSelectedLevelData.BlocksData.Length!=0)
+            if (_selectedLevelData.BlocksData.Length!=0)
             {
-                var maxX = _currentSelectedLevelData.GridWidth;
-                var maxY = _currentSelectedLevelData.GridHeight;
+                var maxX = _selectedLevelData.GridWidth;
+                var maxY = _selectedLevelData.GridHeight;
             
-                _currentSelectedLevelData.AddData(maxX, maxY-1, BlockType.NONE); //add right side 1 cell
+                _selectedLevelData.AddData_Editor(maxX, maxY-1, BlockType.NONE); //add right side 1 cell
+            }
+        }
+        
+        private void LoadLevelsData()
+        {
+            _allLevelsSectionsDataContainers = new List<LevelsSectionDataContainer>();
+
+            foreach (var value in Enum.GetNames(typeof(LevelSection)).Skip(1))
+            {
+                var targetName = StringHelpers.BuildDataNameByType<LevelsSectionDataContainer>(value);
+                
+                var levelsSectionDataContainer = EditorResourcesManager.LoadJsonDataAsset<LevelsSectionDataContainer>(targetName);
+                if (levelsSectionDataContainer==null)
+                {
+                    levelsSectionDataContainer = new LevelsSectionDataContainer
+                    {
+                        Section = Enum.Parse<LevelSection>(value)
+                    };
+                    var json =JsonConvert.SerializeObject(levelsSectionDataContainer);
+                    EditorResourcesManager.CreateJson(targetName,json);
+                }
+                _allLevelsSectionsDataContainers.Add(levelsSectionDataContainer);
+            }
+
+            if (_allLevelsSectionsDataContainers!=null && _allLevelsSectionsDataContainers.Count>0 
+                                                       && _allLevelsSectionsDataContainers[0].Data!=null)
+            {
+                SelectSection((LevelSection)1);
+                SelectLevel(0);
             }
         }
         
         private void SaveLevelsData()
         {
             CorrectLevelData();
-            string dataJson = JsonConvert.SerializeObject(_levelsDataContainer);
-            EditorResourcesManager.CreateJson<LevelsDataContainer>(dataJson);
+            var targetName = StringHelpers.BuildDataNameByType<LevelsSectionDataContainer>(
+                _selectedLevelsSectionDataContainer.Section.ToString());
+            
+            string dataJson = JsonConvert.SerializeObject(_selectedLevelsSectionDataContainer);
+            EditorResourcesManager.CreateJson(targetName, dataJson);
         }
 
         private void OnDisable()

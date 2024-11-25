@@ -1,20 +1,22 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Gameplay.Levels.Enums;
 
 namespace Gameplay.Levels.Data
 {
     [Serializable]
-    public class LevelsDataContainer
+    public class LevelsSectionDataContainer
     {
+        public LevelSection Section;
         public readonly List<LevelData> Data;
 
-        public LevelsDataContainer(List<LevelData> data)
+        public LevelsSectionDataContainer(List<LevelData> data)
         {
             Data = data;
         }
 
-        public LevelsDataContainer()
+        public LevelsSectionDataContainer()
         {
             Data = new List<LevelData>();
         }
@@ -24,14 +26,15 @@ namespace Gameplay.Levels.Data
             return Data.FirstOrDefault(x => x.LevelId == levelId);
         }
         
-        public LevelData AddNextLevelData()
+#if UNITY_EDITOR
+        public LevelData AddNextLevelData_Editor()
         {
             var newData = new LevelData(Data.Count);
             Data.Add(newData);
             return newData;
         }
         
-        public void AddLevelData(LevelData data)
+        public void AddLevelData_Editor(LevelData data)
         {
             if (Data.Any(x=>x.LevelId==data.LevelId))
             {
@@ -43,5 +46,6 @@ namespace Gameplay.Levels.Data
                 Data.Add(data);
             }
         }
+#endif
     }
 }
