@@ -67,13 +67,11 @@ namespace Gameplay.Managers
             SetNextLevel();
         }
 
-        [Button]
         public void RestartLevel() //public for now (called by unity events scene buttons)
         {
             SetLevel(_currentLevelData, _currentSection);
         }
         
-        [Button]
         public void SetNextLevel() //public for now (called by unity events scene buttons)
         {
             var currentSection = _assetsProviderService.LoadLevelsSectionDataContainer(_currentSection);
