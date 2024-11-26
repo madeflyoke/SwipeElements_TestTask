@@ -11,6 +11,7 @@ using Utility;
 
 namespace Editor
 {
+    //Not supported "Remove level" feature, just delete file for now
     public class LevelsEditor : EditorWindow
     {
         private const int GRID_SIZE = 15; //maximum size of comfort field (mobiles)
