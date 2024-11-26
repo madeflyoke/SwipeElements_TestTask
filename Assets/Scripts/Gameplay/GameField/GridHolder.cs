@@ -5,18 +5,16 @@ namespace Gameplay.GameField
 {
     public class GridHolder : MonoBehaviour
     {
+        [SerializeField] private Vector3 _originalScale;
+        [SerializeField] private Vector3 _originalPosition;
+        
         public GridCell[,] Cells { get; private set; }
         private GridController _gridController;
         
         private Transform _gridParent;
-        private Vector3 _originalScale;
-        private Vector3 _originalPosition;
         
         public void Create(int width, int height, float cellSize)
         {
-            _originalScale = transform.localScale;
-            _originalPosition = transform.position;
-            
             Cells = new GridCell[width,height];
             _gridParent = new GameObject("GridParent").transform;
             _gridParent.SetParent(transform);
@@ -81,5 +79,15 @@ namespace Gameplay.GameField
         {
             _gridController?.Dispose();
         }
+        
+#if UNITY_EDITOR
+
+        private void OnValidate()
+        {
+            _originalScale = transform.localScale;
+            _originalPosition = transform.position;
+        }
+
+#endif
     }
 }

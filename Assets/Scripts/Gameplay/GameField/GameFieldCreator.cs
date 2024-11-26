@@ -28,11 +28,12 @@ namespace Gameplay.GameField
         private void Awake()
         {
             _signalBus.Subscribe<LevelStartedSignal>(Initialize);
-            _signalBus.Subscribe<LevelCompletedSignal>(ResetGameField);
         }
         
         private void Initialize(LevelStartedSignal signal)
         {
+            TryResetGameField();
+                
             _levelData = signal.LevelData;
             _gridHolder.Create(_levelData.GridWidth, _levelData.GridHeight, Constants.CELL_SIZE);
             
@@ -78,15 +79,18 @@ namespace Gameplay.GameField
             _gridHolder.SetAdjustedScale(Vector3.one*scale);
         }
 
-        private void ResetGameField()
+        private void TryResetGameField()
         {
-            _gridHolder.ResetGrid();
+            if (_gridHolder)
+            {
+                _gridHolder.ResetGrid();
+            }
         }
 
         private void OnDisable()
         {
-            _signalBus.Unsubscribe<LevelStartedSignal>(Initialize);
-            _signalBus.Unsubscribe<LevelCompletedSignal>(ResetGameField);
+            _signalBus.TryUnsubscribe<LevelStartedSignal>(Initialize);
+            _signalBus.TryUnsubscribe<LevelCompletedSignal>(TryResetGameField);
         }
 
 

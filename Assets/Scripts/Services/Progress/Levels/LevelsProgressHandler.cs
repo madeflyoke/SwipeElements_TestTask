@@ -226,9 +226,9 @@ namespace Services.Progress.Levels
 
         private void UnsubscribeSignals()
         {
-            _signalBus.Unsubscribe<GameFieldChangedSignal>(OnGameFieldChanged);
-            _signalBus.Unsubscribe<LevelStartedSignal>(OnLevelStarted);
-            _signalBus.Unsubscribe<LevelCompletedSignal>(OnLevelCompleted);
+            _signalBus.TryUnsubscribe<GameFieldChangedSignal>(OnGameFieldChanged);
+            _signalBus.TryUnsubscribe<LevelStartedSignal>(OnLevelStarted);
+            _signalBus.TryUnsubscribe<LevelCompletedSignal>(OnLevelCompleted);
         }
         
         public void Dispose()

@@ -47,8 +47,8 @@ namespace Services.Input
         public void Dispose()
         {
             _inputSwipe.SwipePerformed -= OnSwipePerformed;
-            _signalBus.Unsubscribe<LevelStartedSignal>(OnLevelStarted);
-            _signalBus.Unsubscribe<LevelCompletedSignal>(OnLevelCompleted);
+            _signalBus.TryUnsubscribe<LevelStartedSignal>(OnLevelStarted);
+            _signalBus.TryUnsubscribe<LevelCompletedSignal>(OnLevelCompleted);
 
         }
     }

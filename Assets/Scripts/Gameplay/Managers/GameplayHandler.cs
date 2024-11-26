@@ -36,10 +36,10 @@ namespace Gameplay.Managers
         
         private void OnDisable()
         {
-            _signalBus.Unsubscribe<LevelCompletedSignal>(OnLevelCompleted);
+            _signalBus.TryUnsubscribe<LevelCompletedSignal>(OnLevelCompleted);
         }
         
-        public void Start() //once per launch
+        public void Start()
         {
             var lastPlayedLevel = _levelsProgressHandler.LoadLastPlayedLevelData();
             _currentSection = lastPlayedLevel.RelatedSection;
@@ -64,11 +64,17 @@ namespace Gameplay.Managers
 
         private void OnLevelCompleted()
         {
-    //        SetNextLevel();
+            SetNextLevel();
         }
 
         [Button]
-        private void SetNextLevel()
+        public void RestartLevel() //public for now (called by unity events scene buttons)
+        {
+            SetLevel(_currentLevelData, _currentSection);
+        }
+        
+        [Button]
+        public void SetNextLevel() //public for now (called by unity events scene buttons)
         {
             var currentSection = _assetsProviderService.LoadLevelsSectionDataContainer(_currentSection);
             var nextLevelId = _currentLevelData.LevelId+1;
