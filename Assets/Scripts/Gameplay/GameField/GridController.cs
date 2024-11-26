@@ -182,7 +182,6 @@ namespace Gameplay.GameField
                 && (direction==SwipeDirection.UP && toCell.IsEmpty)==false)
             {
                 SwapCells(fromCell, toCell);
-                Debug.LogWarning($"Swapped from {fromCell.Coord.x}{fromCell.Coord.y} to {toCoord.x}{toCoord.y}");
             }
         }
 
@@ -347,7 +346,6 @@ namespace Gameplay.GameField
             if (_aliveBlocksCount<=0)
             {
                 _signalBus.Fire(new LevelCompletedSignal());
-                Debug.LogWarning("Finish");
             }
         }
         

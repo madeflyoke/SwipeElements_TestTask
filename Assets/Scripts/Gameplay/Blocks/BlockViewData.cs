@@ -8,6 +8,6 @@ namespace Gameplay.Blocks
     public class BlockViewData
     {
         public BlockType Type;
-        public Sprite BaseSprite;
+        public AnimatorOverrideController AnimatorOverrideController;
     }
 }

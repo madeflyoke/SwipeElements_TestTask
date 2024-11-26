@@ -17,8 +17,7 @@ namespace Gameplay.Factories
 #if UNITY_EDITOR
             block.gameObject.name = parent.name + "Block";
 #endif
-            block.Initialize(blockType);
-            block.SetSprite(blockViewData.BaseSprite);
+            block.Initialize(blockType, blockViewData.AnimatorOverrideController);
             return block;
         }
     }

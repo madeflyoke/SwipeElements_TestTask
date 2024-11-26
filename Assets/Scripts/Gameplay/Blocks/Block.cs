@@ -2,33 +2,31 @@ using System;
 using DG.Tweening;
 using Gameplay.Blocks.Enums;
 using UnityEngine;
+using Utility;
 
 namespace Gameplay.Blocks
 {
     public class Block : MonoBehaviour
     {
+        public event Action BlockDestroyed;
         public BlockType Type { get; private set; }
         
         [SerializeField] private Collider2D _collider;
-        [SerializeField] private SpriteRenderer _spriteRenderer;
+        [SerializeField] private Animator _animator;
         private Tween _movingTween;
         private bool _isBusy;
         
-        public void Initialize(BlockType type)
+        public void Initialize(BlockType type, AnimatorOverrideController controller)
         {
             Type = type;
+            _animator.runtimeAnimatorController = controller;
+        }
+        
+        public void StartDestroyingBlock()
+        {
+            _animator.SetTrigger(Constants.Animations.BLOCK_DESTROY_TRIGGER);
         }
 
-        public void SetSprite(Sprite sprite)
-        {
-            _spriteRenderer.sprite = sprite;
-        }
-        
-        public void DestroyBlock()
-        {
-            Destroy(gameObject);
-        }
-        
         public void MoveTo(Vector3 pos,Action onComplete)
         {
             SetBusy(true);
@@ -50,6 +48,12 @@ namespace Gameplay.Blocks
         private void OnDisable()
         {
             _movingTween?.Kill();
+        }
+
+        private void OnDeathAnimation() //animation event
+        {
+            BlockDestroyed?.Invoke();
+            Destroy(gameObject);
         }
     }
 }

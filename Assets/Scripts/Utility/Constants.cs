@@ -15,5 +15,10 @@ namespace Utility
         {
             public const int BLOCK = 6;
         }
+
+        public static class Animations
+        {
+            public const string BLOCK_DESTROY_TRIGGER = "Death";
+        }
     }
 }

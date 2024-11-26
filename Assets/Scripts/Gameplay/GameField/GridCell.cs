@@ -48,8 +48,16 @@ namespace Gameplay.GameField
 
         public void Clear()
         {
-            CurrentBlock.DestroyBlock();
-            CurrentBlock = null;
+            if (CurrentBlock!=null)
+            {
+                CurrentBlock.BlockDestroyed += OnCurrentBlockDestroyed;
+                CurrentBlock.StartDestroyingBlock();
+                CurrentBlock = null;
+            }
+        }
+
+        private void OnCurrentBlockDestroyed()
+        {
             BlockDestroyFinished?.Invoke();
         }
     }
