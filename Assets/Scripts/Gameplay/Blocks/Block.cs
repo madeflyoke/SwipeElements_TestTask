@@ -12,6 +12,7 @@ namespace Gameplay.Blocks
         public BlockType Type { get; private set; }
         
         [SerializeField] private Collider2D _collider;
+        [SerializeField] private SpriteRenderer _spriteRenderer;
         [SerializeField] private Animator _animator;
         private Tween _movingTween;
         private bool _isBusy;
@@ -21,9 +22,15 @@ namespace Gameplay.Blocks
             Type = type;
             _animator.runtimeAnimatorController = controller;
         }
+
+        public void SetSortingOrder(int index)
+        {
+            _spriteRenderer.sortingOrder = index;
+        }
         
         public void StartDestroyingBlock()
         {
+            SetBusy(true);
             _animator.SetTrigger(Constants.Animations.BLOCK_DESTROY_TRIGGER);
         }
 

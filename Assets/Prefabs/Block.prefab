@@ -166,4 +166,5 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _collider: {fileID: 7945077246221345786}
+  _spriteRenderer: {fileID: 6245063890167424142}
   _animator: {fileID: 2443132402140514179}

@@ -17,10 +17,12 @@ namespace Gameplay.GameField
         public Vector2Int Coord { get; private set; }
         public Block CurrentBlock { get; private set; }
         public bool IsBusy { get; private set; }
+        private int _relatedSortingOrder;
         
-        public void Initialize(Vector2Int coord)
+        public void Initialize(Vector2Int coord, int relatedSortingOrder)
         {
             Coord = coord;
+            _relatedSortingOrder = relatedSortingOrder;
         }
 
         public void SetBlock(Block block, bool animated)
@@ -28,12 +30,14 @@ namespace Gameplay.GameField
             CurrentBlock = block; //null is expected also
             if (block!=null)
             {
+                CurrentBlock.SetSortingOrder(_relatedSortingOrder);
                 if (animated)
                 {
                     IsBusy = true;
                     block.MoveTo(transform.position, () =>
                     {
                         CurrentBlock.transform.SetParent(transform);
+                        
                         IsBusy = false;
                         BlockMovementFinished?.Invoke();
                     });

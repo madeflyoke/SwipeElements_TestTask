@@ -36,7 +36,9 @@ namespace Gameplay.GameField
                     GridCell cell = new GameObject($"Cell_{xCoord}:{yCoord}").AddComponent<GridCell>();
                     cell.transform.position = worldPos;
                     cell.transform.SetParent(_gridParent.transform);
-                    cell.Initialize(coord);
+                    var sortingOrder = xCoord + yCoord;
+                    
+                    cell.Initialize(coord, sortingOrder);
 
                     Cells[xCoord, yCoord] = cell;
                 }
