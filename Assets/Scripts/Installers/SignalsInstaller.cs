@@ -12,6 +12,8 @@ namespace Installers
             Container.DeclareSignal<LevelStartedSignal>();
             Container.DeclareSignal<LevelCompletedSignal>();
             Container.DeclareSignal<GameFieldChangedSignal>();
+            Container.DeclareSignal<CallOnNextLevelSignal>();
+            Container.DeclareSignal<CallOnRestartLevelSignal>();
         }
     }
 }

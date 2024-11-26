@@ -12,7 +12,7 @@ using Zenject;
 
 namespace Services.Progress.Levels
 {
-    public class LevelsProgressHandler : IDisposable //maybe too complicated logic (maybe decomposition)
+    public class LevelsProgressHandler : IDisposable //maybe too complicated logic (decomposition?)
     {
         private const string SEPARATOR = "|";
 
@@ -35,6 +35,23 @@ namespace Services.Progress.Levels
             SubscribeSignals();
             _assetsProviderService = diContainer.Resolve<ServicesHolder>().GetService<AssetsProviderService>();
             Initialize();
+        }
+        
+        private void Initialize()
+        {
+            _stringBuilder = new StringBuilder();
+
+            var lastSection = LoadLastOpenedSection();
+            if (lastSection==LevelSection.NONE)
+            {
+                HandleFirstSession();
+            }
+            else
+            {
+                SetCurrentSectionDataContainer(lastSection);
+            }
+            
+            _cachedCurrentLevelProgressData = LoadLastPlayedLevelData();
         }
 
         private void SubscribeSignals()
@@ -60,25 +77,8 @@ namespace Services.Progress.Levels
         {
             SaveCurrentLevelExtendedData(_currentSectionProgressDataContainer.Section, _currentLevelId, signal.GridBlocksState);
         }
-
-        private void Initialize()
-        {
-            _stringBuilder = new StringBuilder();
-
-            var lastSection = LoadLastOpenedSection();
-            if (lastSection==LevelSection.NONE)
-            {
-                HandleFirstSession();
-            }
-            else
-            {
-                SetCurrentSectionDataContainer(lastSection);
-            }
-            
-            _cachedCurrentLevelProgressData = LoadLastPlayedLevelData();
-        }
-
-        public void SaveCurrentLevelCompleted()
+        
+        private void SaveCurrentLevelCompleted()
         {
             _cachedCurrentLevelProgressData.IsCompleted = true;
             SaveCachedCurrentLevelData();

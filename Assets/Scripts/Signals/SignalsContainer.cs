@@ -30,4 +30,14 @@ namespace Signals
             GridBlocksState = gridBlocksState;
         }
     }
+
+    public struct CallOnRestartLevelSignal
+    {
+        
+    }
+
+    public struct CallOnNextLevelSignal
+    {
+        
+    }
 }

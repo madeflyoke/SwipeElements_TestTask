@@ -1,5 +1,3 @@
-using System;
-using EasyButtons;
 using Gameplay.Levels.Data;
 using Gameplay.Levels.Enums;
 using Services;
@@ -32,11 +30,15 @@ namespace Gameplay.Managers
         private void OnEnable()
         {
             _signalBus.Subscribe<LevelCompletedSignal>(OnLevelCompleted);
+            _signalBus.Subscribe<CallOnNextLevelSignal>(SetNextLevel);
+            _signalBus.Subscribe<CallOnRestartLevelSignal>(RestartLevel);
         }
         
         private void OnDisable()
         {
             _signalBus.TryUnsubscribe<LevelCompletedSignal>(OnLevelCompleted);
+            _signalBus.TryUnsubscribe<CallOnNextLevelSignal>(SetNextLevel);
+            _signalBus.TryUnsubscribe<CallOnRestartLevelSignal>(RestartLevel);
         }
         
         public void Start()
@@ -67,12 +69,12 @@ namespace Gameplay.Managers
             SetNextLevel();
         }
 
-        public void RestartLevel() //public for now (called by unity events scene buttons)
+        private void RestartLevel()
         {
             SetLevel(_currentLevelData, _currentSection);
         }
         
-        public void SetNextLevel() //public for now (called by unity events scene buttons)
+        private void SetNextLevel()
         {
             var currentSection = _assetsProviderService.LoadLevelsSectionDataContainer(_currentSection);
             var nextLevelId = _currentLevelData.LevelId+1;
