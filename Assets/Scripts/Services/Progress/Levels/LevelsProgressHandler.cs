@@ -12,10 +12,13 @@ using Zenject;
 
 namespace Services.Progress.Levels
 {
+    /// <summary>
+    /// PlayerPrefs mostly
+    /// </summary>
     public class LevelsProgressHandler : IDisposable //maybe too complicated logic (decomposition?)
     {
         private const string SEPARATOR = "|";
-
+        
         private const string LAST_OPENED_SECTION = "LastOpenedSection";
         private const string LAST_PLAYED_LEVEL_DATA = "LastLevelData";
         private const string LEVELS_SECTION_DATA_CONTAINER_KEY = "LevelsDataContainerKey";

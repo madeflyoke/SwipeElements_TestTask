@@ -27,15 +27,19 @@ namespace Gameplay.GameField
 
         public void SetBlock(Block block, bool animated)
         {
-            CurrentBlock = block; //null is expected also
-            if (block!=null)
+            if (block==null)
             {
-                CurrentBlock.SetSortingOrder(_relatedSortingOrder);
+                CurrentBlock = block; //null is expected also
+            }
+            else
+            {
+                block.SetSortingOrder(_relatedSortingOrder);
                 if (animated)
                 {
                     IsBusy = true;
                     block.MoveTo(transform.position, () =>
                     {
+                        CurrentBlock = block;
                         CurrentBlock.transform.SetParent(transform);
                         
                         IsBusy = false;
@@ -44,6 +48,7 @@ namespace Gameplay.GameField
                 }
                 else
                 {
+                    CurrentBlock = block; 
                     CurrentBlock.transform.SetParent(transform);
                     CurrentBlock.transform.localPosition = Vector3.zero;
                 }
@@ -54,14 +59,16 @@ namespace Gameplay.GameField
         {
             if (CurrentBlock!=null)
             {
+                IsBusy = true;
                 CurrentBlock.BlockDestroyed += OnCurrentBlockDestroyed;
                 CurrentBlock.StartDestroyingBlock();
-                CurrentBlock = null;
             }
         }
 
         private void OnCurrentBlockDestroyed()
         {
+            CurrentBlock = null;
+            IsBusy = false;
             BlockDestroyFinished?.Invoke();
         }
     }
