@@ -16,7 +16,7 @@ namespace Services.Progress
             LevelsProgressHandler = _diContainer.Instantiate<LevelsProgressHandler>(new object[]{_diContainer});
             return UniTask.CompletedTask;
         }
-        
+
         public void Dispose()
         {
             

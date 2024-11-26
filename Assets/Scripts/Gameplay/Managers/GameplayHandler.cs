@@ -29,28 +29,57 @@ namespace Gameplay.Managers
             _levelsProgressHandler = servicesHolder.GetService<ProgressService>().LevelsProgressHandler;
         }
 
-        private void SetLevel(LevelSection section, int levelId)
+        private void OnEnable()
         {
-            _currentSection = section;
-            _currentLevelData = _assetsProviderService.LoadLevelsSectionDataContainer(section).GetLevelData(levelId);
-            _signalBus.Fire(new GameplayStartedSignal(_currentSection, _currentLevelData));
-        }
-
-        [Button]
-        public void SetLevelCompleted()
-        {
-            _levelsProgressHandler.SaveLevelCompleted(_currentSection, _currentLevelData.LevelId);
-        }
-
-        [Button]
-        public void GetLevelCompleted()
-        {
-            Debug.LogWarning(_levelsProgressHandler.IsLevelCompleted(_currentSection, _currentLevelData.LevelId));
+            _signalBus.Subscribe<LevelCompletedSignal>(OnLevelCompleted);
         }
         
-        public void Start()
+        private void OnDisable()
         {
-            SetLevel(LevelSection.TROPICAL_GREEN,0);
+            _signalBus.Unsubscribe<LevelCompletedSignal>(OnLevelCompleted);
+        }
+        
+        public void Start() //once per launch
+        {
+            var lastPlayedLevel = _levelsProgressHandler.LoadLastPlayedLevelData();
+            _currentSection = lastPlayedLevel.RelatedSection;
+            _currentLevelData = lastPlayedLevel.ConvertToLevelData();
+                
+            if (lastPlayedLevel.IsStarted && lastPlayedLevel.IsCompleted==false) //continue last started but not completed level
+            {
+                SetLevel(_currentLevelData,lastPlayedLevel.RelatedSection);
+            }
+            else //level selector choice for
+            { 
+                SetNextLevel();
+            }
+        }
+        
+        private void SetLevel(LevelData levelData, LevelSection levelSection)
+        {
+            _currentSection = levelSection;
+            _currentLevelData = levelData;
+            _signalBus.Fire(new LevelStartedSignal(_currentSection, _currentLevelData));
+        }
+
+        private void OnLevelCompleted()
+        {
+    //        SetNextLevel();
+        }
+
+        [Button]
+        private void SetNextLevel()
+        {
+            var currentSection = _assetsProviderService.LoadLevelsSectionDataContainer(_currentSection);
+            var nextLevelId = _currentLevelData.LevelId+1;
+            
+            if (nextLevelId>=currentSection.Data.Count)
+            {
+                nextLevelId = 0; //for now cycle loop
+            }
+            var levelData =currentSection.GetLevelData(nextLevelId);
+
+            SetLevel(levelData,_currentSection);
         }
     }
 }

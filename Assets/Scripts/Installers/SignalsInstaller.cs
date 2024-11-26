@@ -1,5 +1,4 @@
 using Signals;
-using UnityEngine;
 using Zenject;
 
 namespace Installers
@@ -10,7 +9,9 @@ namespace Installers
         {
             SignalBusInstaller.Install(Container);
 
-            Container.DeclareSignal<GameplayStartedSignal>();
+            Container.DeclareSignal<LevelStartedSignal>();
+            Container.DeclareSignal<LevelCompletedSignal>();
+            Container.DeclareSignal<GameFieldChangedSignal>();
         }
     }
 }

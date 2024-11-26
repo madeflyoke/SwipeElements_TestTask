@@ -25,6 +25,15 @@ namespace Gameplay.Levels.Data
             BlocksData = new BlockType[0,0];
         }
 
+        public LevelData Copy()
+        {
+            return new LevelData()
+            {
+                LevelId = this.LevelId,
+                BlocksData = this.BlocksData
+            };
+        }
+
 #if UNITY_EDITOR
         public void AddData_Editor(int xCoord, int yCoord, BlockType type)
         {

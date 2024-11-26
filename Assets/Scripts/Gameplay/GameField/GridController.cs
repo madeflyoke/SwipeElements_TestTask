@@ -6,6 +6,9 @@ using Gameplay.Blocks.Enums;
 using Services;
 using Services.Input;
 using Services.Input.Enums;
+using Services.Progress;
+using Services.Progress.Levels;
+using Signals;
 using UnityEngine;
 using Utility;
 using Zenject;
@@ -21,6 +24,9 @@ namespace Gameplay.GameField
         private readonly Camera _camera;
         private InputService _inputService;
         private GridCell _lastPerformedCell; //used to track last cell that started animations to receive callbacks when its finished
+
+        private int _aliveBlocksCount;
+        private SignalBus _signalBus;
         
         public GridController(GridCell[,] cells)
         {
@@ -29,10 +35,22 @@ namespace Gameplay.GameField
         }
         
         [Inject]
-        public void Construct(ServicesHolder servicesHolder)
+        public void Construct(ServicesHolder servicesHolder, SignalBus signalBus)
         {
             _inputService = servicesHolder.GetService<InputService>();
             _inputService.SwipePerformed += OnInputSwipePerformed;
+            _signalBus = signalBus;
+        }
+
+        public void OnGameFieldReady()
+        {
+            _cells.ForEach((e,x,y) =>
+            {
+                if (e.RelatedBlockType!=BlockType.NONE)
+                {
+                    _aliveBlocksCount++;
+                }
+            });
         }
         
         private void OnSwap()
@@ -58,15 +76,24 @@ namespace Gameplay.GameField
                 
                 matchCells.ForEach(cell =>
                 {
+                    Mathf.Clamp(--_aliveBlocksCount, 0,int.MaxValue);
                     cell.Clear();
                 });
+            }
+            else
+            {
+                CallOnGameFieldChanged(); //no matches normalize point 
             }
         }
         
         private void OnBlocksDestroyed()
         {
             _lastPerformedCell.BlockDestroyFinished -= OnBlocksDestroyed;
-            TryBlocksFalling();
+            if (TryBlocksFalling()==false)
+            {
+                CallOnGameFieldChanged(); //no falling normalize point
+                TryCallOnGameplayCompleted();
+            }
         }
 
 #region FALLING
@@ -302,7 +329,29 @@ namespace Gameplay.GameField
 
 
 #endregion
+
+        private void CallOnGameFieldChanged()
+        {
+            var gridBlocksData = new BlockType[_cells.GetLength(0), _cells.GetLength(1)];
+            
+            _cells.ForEach((e, x, y) =>
+            {
+                gridBlocksData[x, y] = e.RelatedBlockType;
+            });
+            
+            _signalBus.Fire(new GameFieldChangedSignal(gridBlocksData));
+        }
+
+        private void TryCallOnGameplayCompleted()
+        {
+            if (_aliveBlocksCount<=0)
+            {
+                _signalBus.Fire(new LevelCompletedSignal());
+                Debug.LogWarning("Finish");
+            }
+        }
         
+
         public void Dispose()
         {
             _inputService.SwipePerformed -= OnInputSwipePerformed;

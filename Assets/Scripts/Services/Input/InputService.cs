@@ -19,7 +19,8 @@ namespace Services.Input
 
         public UniTask Initialize(CancellationTokenSource cts)
         {
-            _signalBus.Subscribe<GameplayStartedSignal>(OnGameplayStarted);
+            _signalBus.Subscribe<LevelStartedSignal>(OnLevelStarted);
+            _signalBus.Subscribe<LevelCompletedSignal>(OnLevelCompleted);
             
             _inputSwipe = new InputSwipe();
             _inputSwipe.SwipePerformed += OnSwipePerformed;
@@ -31,9 +32,14 @@ namespace Services.Input
             SwipePerformed?.Invoke(startPos, swipeDirection);
         }
         
-        private void OnGameplayStarted()
+        private void OnLevelStarted()
         {
             _inputSwipe.SetActive(true);
+        }
+
+        private void OnLevelCompleted()
+        {
+            _inputSwipe.SetActive(false);
         }
         
         //gameplay stopped (menu etc)  _inputSwipe.SetActive(false);
@@ -41,7 +47,8 @@ namespace Services.Input
         public void Dispose()
         {
             _inputSwipe.SwipePerformed -= OnSwipePerformed;
-            _signalBus.Unsubscribe<GameplayStartedSignal>(OnGameplayStarted);
+            _signalBus.Unsubscribe<LevelStartedSignal>(OnLevelStarted);
+            _signalBus.Unsubscribe<LevelCompletedSignal>(OnLevelCompleted);
 
         }
     }

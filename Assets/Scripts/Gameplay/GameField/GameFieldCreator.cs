@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using EasyButtons;
 using Gameplay.Blocks.Enums;
@@ -26,11 +27,11 @@ namespace Gameplay.GameField
 
         private void Awake()
         {
-            _signalBus.Subscribe<GameplayStartedSignal>(Initialize);
+            _signalBus.Subscribe<LevelStartedSignal>(Initialize);
+            _signalBus.Subscribe<LevelCompletedSignal>(ResetGameField);
         }
         
-        [Button]
-        private void Initialize(GameplayStartedSignal signal)
+        private void Initialize(LevelStartedSignal signal)
         {
             _levelData = signal.LevelData;
             _gridHolder.Create(_levelData.GridWidth, _levelData.GridHeight, Constants.CELL_SIZE);
@@ -38,6 +39,8 @@ namespace Gameplay.GameField
             CreateBlocks();
             SetGroundedOffset();
             AdjustSize();
+            
+            _gridHolder.OnGameFieldReady();
         }
 
         private void CreateBlocks()
@@ -57,7 +60,7 @@ namespace Gameplay.GameField
         {
             var gridPos = _gridHolder.transform.position;
             gridPos.y = _groundPoint.position.y;
-            _gridHolder.transform.position = gridPos;
+            _gridHolder.SetAdjustedPosition(gridPos);
         }
 
         private void AdjustSize()
@@ -72,10 +75,22 @@ namespace Gameplay.GameField
             leftCellX -= Constants.CELL_SIZE / 2;
              
             var scale = _gridHolder.transform.localScale.x * (targetX / leftCellX);
-            _gridHolder.transform.localScale = Vector3.one*scale;
+            _gridHolder.SetAdjustedScale(Vector3.one*scale);
         }
-        
-        #if UNITY_EDITOR
+
+        private void ResetGameField()
+        {
+            _gridHolder.ResetGrid();
+        }
+
+        private void OnDisable()
+        {
+            _signalBus.Unsubscribe<LevelStartedSignal>(Initialize);
+            _signalBus.Unsubscribe<LevelCompletedSignal>(ResetGameField);
+        }
+
+
+#if UNITY_EDITOR
 
         private void OnDrawGizmos()
         {

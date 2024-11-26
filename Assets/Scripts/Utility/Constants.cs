@@ -7,7 +7,8 @@ namespace Utility
 
         public static class ResourcesPaths
         {
-            public const string DATA = "Data/";
+            public const string DATA = "Data";
+            public const string CONFIGS = "Configs";
         }
 
         public static class Layers

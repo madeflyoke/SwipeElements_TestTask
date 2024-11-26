@@ -23,7 +23,9 @@ namespace Gameplay.Levels.Data
 
         public LevelData GetLevelData(int levelId)
         {
-            return Data.FirstOrDefault(x => x.LevelId == levelId);
+            var originalData = Data.FirstOrDefault(x => x.LevelId == levelId);
+         
+            return originalData?.Copy();
         }
         
 #if UNITY_EDITOR

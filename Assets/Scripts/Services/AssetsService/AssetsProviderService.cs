@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
@@ -27,7 +28,12 @@ namespace Services.AssetsService
             var dataName = StringHelpers.BuildDataNameByType<SectionDataContainer>(postfix);
             return LoadJsonDataAsset<SectionDataContainer>(dataName);
         }
-        
+
+        public SectionsContainer LoadLevelSectionsContainer()
+        {
+            return LoadConfigAsset<SectionsContainer>(nameof(SectionsContainer));
+        }
+
         private T LoadJsonDataAsset<T>(string dataName) where T: class
         {
             var path = Path.Combine(Constants.ResourcesPaths.DATA, dataName);
@@ -41,7 +47,7 @@ namespace Services.AssetsService
 
             if (json == null)
             {
-                Debug.LogError($"Path not found: {dataName}");
+                Debug.LogError($"Path not found: {path}");
                 return null;
             }
             
@@ -50,11 +56,40 @@ namespace Services.AssetsService
 
             if (jsonData == null)
             {
-                Debug.LogError($"Json cant be serialized: {dataName}");
+                Debug.LogError($"Json cant be serialized: {path}");
             }
             
             _cachedAssets.Add(path, jsonData);
             return jsonData;
+        }
+
+        private T LoadConfigAsset<T>(string optionalName="", bool withUnload = true) where T: ScriptableObject
+        {
+            var path = Path.Combine(Constants.ResourcesPaths.CONFIGS, optionalName);
+
+            if (_cachedAssets.ContainsKey(path))
+            {
+                return _cachedAssets[path] as T;
+            }
+            
+            var config = Resources.Load<T>(path);
+            
+            if (config == null)
+            {
+                Debug.LogError($"Path not found: {path}");
+                return null;
+            }
+            
+            if (withUnload)
+            {
+                Resources.UnloadAsset(config);
+            }
+            else
+            {
+                _cachedAssets.Add(path, config);
+            }
+
+            return config;
         }
 
         public void Dispose()

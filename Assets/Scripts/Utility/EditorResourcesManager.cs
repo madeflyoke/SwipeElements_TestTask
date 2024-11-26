@@ -1,9 +1,6 @@
 #if UNITY_EDITOR
-using System;
 using System.IO;
-using System.Reflection;
 using Newtonsoft.Json;
-using Services.AssetsService;
 using UnityEditor;
 using UnityEngine;
 
@@ -15,7 +12,7 @@ namespace Utility
         
         public static void CreateJson(string fileName, string content)
         {
-            var directoryPath = Path.Combine(Application.dataPath + "/"+ RESOURCES_PATH, Constants.ResourcesPaths.DATA);
+            var directoryPath = Path.Combine(Application.dataPath, RESOURCES_PATH, Constants.ResourcesPaths.DATA);
             if (Directory.Exists(directoryPath)==false)
             {
                 Directory.CreateDirectory(directoryPath);

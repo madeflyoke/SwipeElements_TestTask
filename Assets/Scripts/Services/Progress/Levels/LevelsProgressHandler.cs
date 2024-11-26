@@ -6,54 +6,147 @@ using Gameplay.Blocks.Enums;
 using Gameplay.Levels.Enums;
 using Newtonsoft.Json;
 using Services.AssetsService;
+using Signals;
 using UnityEngine;
 using Zenject;
 
 namespace Services.Progress.Levels
 {
-    public class LevelsProgressHandler
+    public class LevelsProgressHandler : IDisposable //maybe too complicated logic (maybe decomposition)
     {
-     //   private const string LAST_LEVEL_DATA = "LastLevelData";
+        private const string SEPARATOR = "|";
+
+        private const string LAST_OPENED_SECTION = "LastOpenedSection";
+        private const string LAST_PLAYED_LEVEL_DATA = "LastLevelData";
         private const string LEVELS_SECTION_DATA_CONTAINER_KEY = "LevelsDataContainerKey";
         
         private readonly AssetsProviderService _assetsProviderService;
         private SectionProgressDataContainer _currentSectionProgressDataContainer;
         
-        public LevelsProgressHandler(DiContainer diContainer)
+        private LevelProgressDataExtended _cachedCurrentLevelProgressData;
+        private int _currentLevelId; //not good idea to put full level data here
+
+        private StringBuilder _stringBuilder;
+        private readonly SignalBus _signalBus;
+
+        public LevelsProgressHandler(DiContainer diContainer, SignalBus signalBus)
         {
+            _signalBus = signalBus;
+            SubscribeSignals();
             _assetsProviderService = diContainer.Resolve<ServicesHolder>().GetService<AssetsProviderService>();
+            Initialize();
         }
 
-        public void SaveLevelCompleted(LevelSection section, int levelId)
+        private void SubscribeSignals()
         {
-            ValidateCurrentSectionDataContainer(section);
-            _currentSectionProgressDataContainer.LevelsProgressData.FirstOrDefault(x => x.LevelId == levelId) //TODO map?
+            _signalBus.Subscribe<GameFieldChangedSignal>(OnGameFieldChanged);
+            _signalBus.Subscribe<LevelStartedSignal>(OnLevelStarted);
+            _signalBus.Subscribe<LevelCompletedSignal>(OnLevelCompleted);
+        }
+        
+        private void OnLevelStarted(LevelStartedSignal signal)
+        {
+            SetCurrentSectionDataContainer(signal.RelatedSection);
+            _currentLevelId = signal.LevelData.LevelId;
+            SaveCurrentLevelExtendedData(signal.RelatedSection, _currentLevelId, signal.LevelData.BlocksData);
+        }
+
+        private void OnLevelCompleted()
+        {
+            SaveCurrentLevelCompleted();
+        }
+
+        private void OnGameFieldChanged(GameFieldChangedSignal signal)
+        {
+            SaveCurrentLevelExtendedData(_currentSectionProgressDataContainer.Section, _currentLevelId, signal.GridBlocksState);
+        }
+
+        private void Initialize()
+        {
+            _stringBuilder = new StringBuilder();
+
+            var lastSection = LoadLastOpenedSection();
+            if (lastSection==LevelSection.NONE)
+            {
+                HandleFirstSession();
+            }
+            else
+            {
+                SetCurrentSectionDataContainer(lastSection);
+            }
+            
+            _cachedCurrentLevelProgressData = LoadLastPlayedLevelData();
+        }
+
+        public void SaveCurrentLevelCompleted()
+        {
+            _cachedCurrentLevelProgressData.IsCompleted = true;
+            SaveCachedCurrentLevelData();
+            
+            _currentSectionProgressDataContainer.LevelsProgressData.FirstOrDefault(x => x.LevelId == _currentLevelId) //TODO map?
                 .IsCompleted = true;
             SaveCurrentSectionProgressDataContainer();
         }
 
         public bool IsLevelCompleted(LevelSection section, int levelId)
         {
-            ValidateCurrentSectionDataContainer(section);
-            return _currentSectionProgressDataContainer.LevelsProgressData.FirstOrDefault(x => x.LevelId == levelId).IsCompleted;
+            var previousSection = _currentSectionProgressDataContainer.Section;
+            SetCurrentSectionDataContainer(section);
+            var isCompleted = _currentSectionProgressDataContainer.LevelsProgressData
+                .FirstOrDefault(x => x.LevelId == levelId).IsCompleted;
+            SetCurrentSectionDataContainer(previousSection);
+            return isCompleted;
         }
         
-        private void SaveCurrentSectionProgressDataContainer()
+        public LevelProgressDataExtended LoadLastPlayedLevelData()
         {
-            var levelsJson = JsonConvert.SerializeObject(_currentSectionProgressDataContainer);
-            var levelsJsonEncoded = EncodeBase64(levelsJson);
-            PlayerPrefs.SetString(GetSectionContainerKey(_currentSectionProgressDataContainer.Section), levelsJson);
+            return LoadInternal<LevelProgressDataExtended>(LAST_PLAYED_LEVEL_DATA);
+        }
+        
+        public void SaveLastOpenedSection(LevelSection section)
+        {
+            PlayerPrefs.SetInt(LAST_OPENED_SECTION, (int)section);
+        }
+        
+        public LevelSection LoadLastOpenedSection()
+        {
+            return (LevelSection) PlayerPrefs.GetInt(LAST_OPENED_SECTION,0);
         }
 
-        private SectionProgressDataContainer LoadSectionProgressDataContainer(LevelSection section)
+        private void SaveCurrentLevelExtendedData(LevelSection section, int levelId, BlockType[,] gridState)
         {
-            var levelsJson = PlayerPrefs.GetString(GetSectionContainerKey(section));
-            return JsonConvert.DeserializeObject<SectionProgressDataContainer>(levelsJson); 
-            var levelsJsonEncoded = EncodeBase64(levelsJson);
+            if (_cachedCurrentLevelProgressData==null||
+                _cachedCurrentLevelProgressData.RelatedSection!=section ||
+                _cachedCurrentLevelProgressData.LevelId!=levelId)
+            {
+                _cachedCurrentLevelProgressData = new LevelProgressDataExtended();
+            }
+            
+            _cachedCurrentLevelProgressData.RelatedSection = section;
+            _cachedCurrentLevelProgressData.LevelId = levelId;
+            _cachedCurrentLevelProgressData.GridState = gridState;
+            _cachedCurrentLevelProgressData.IsStarted = true;
+
+            SaveCachedCurrentLevelData();
+        }
+
+        private void SaveCachedCurrentLevelData()
+        {
+            SaveInternal(LAST_PLAYED_LEVEL_DATA, _cachedCurrentLevelProgressData);
         }
         
+        private void HandleFirstSession()
+        {
+            var firstSection = _assetsProviderService.LoadLevelSectionsContainer().GetSection(0);
+            SetCurrentSectionDataContainer(firstSection);
+            SaveLastOpenedSection(firstSection);
+            
+            var dataContainer = _assetsProviderService.LoadLevelsSectionDataContainer(firstSection);
+            SaveCurrentLevelExtendedData(_currentSectionProgressDataContainer.Section,0, dataContainer.GetLevelData(0).BlocksData);
+        }
+
         //Operating only with current section, when new section required - loading or creating it 
-        private void ValidateCurrentSectionDataContainer(LevelSection targetSection)
+        private void SetCurrentSectionDataContainer(LevelSection targetSection)
         {
             if (_currentSectionProgressDataContainer!=null && _currentSectionProgressDataContainer.Section==targetSection)
             {
@@ -83,15 +176,40 @@ namespace Services.Progress.Levels
             }
         }
         
+        private void SaveCurrentSectionProgressDataContainer()
+        {
+            SaveInternal(GetSectionContainerKey(_currentSectionProgressDataContainer.Section), _currentSectionProgressDataContainer);
+        }
+
+        private SectionProgressDataContainer LoadSectionProgressDataContainer(LevelSection section)
+        {
+            return LoadInternal<SectionProgressDataContainer>(GetSectionContainerKey(section));
+        }
+        
         private string GetSectionContainerKey(LevelSection section)
         {
             var sectionId = (int)section;
-            return LEVELS_SECTION_DATA_CONTAINER_KEY + "_" + sectionId;
+            _stringBuilder.Clear();
+            _stringBuilder
+                .Append(LEVELS_SECTION_DATA_CONTAINER_KEY)
+                .Append(SEPARATOR)
+                .Append(sectionId);
+            return _stringBuilder.ToString();
         }
 
-        public void SaveGridBlockStateData(BlockType[,] gridBlocksData)
+        private void SaveInternal(string key, object value)
         {
-        //    _levelProgressDataMap[levelId].LevelData.BlocksData = gridBlocksData;
+            var json = JsonConvert.SerializeObject(value);
+            var jsonEncoded = EncodeBase64(json);
+            PlayerPrefs.SetString(key, jsonEncoded);
+            PlayerPrefs.Save();
+        }
+
+        private T LoadInternal<T>(string key)
+        {
+            var json = PlayerPrefs.GetString(key);
+            var jsonDecoded = DecodeBase64(json);
+            return JsonConvert.DeserializeObject<T>(jsonDecoded);
         }
         
         private string EncodeBase64(string input) //little bit obfuscating
@@ -104,6 +222,18 @@ namespace Services.Progress.Levels
         {
             var base64EncodedBytes = Convert.FromBase64String(base64EncodedData);
             return Encoding.UTF8.GetString(base64EncodedBytes);
+        }
+
+        private void UnsubscribeSignals()
+        {
+            _signalBus.Unsubscribe<GameFieldChangedSignal>(OnGameFieldChanged);
+            _signalBus.Unsubscribe<LevelStartedSignal>(OnLevelStarted);
+            _signalBus.Unsubscribe<LevelCompletedSignal>(OnLevelCompleted);
+        }
+        
+        public void Dispose()
+        {
+            UnsubscribeSignals();
         }
     }
 }
