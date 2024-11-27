@@ -26,6 +26,8 @@ namespace Editor
         private Color[,]_colors = new Color[GRID_SIZE, GRID_SIZE];
         private Color _selectedColor = Color.red;
         
+        private Vector2 _currentScrollPosition;
+        
         private BlockType _selectedBlockType;
         private LevelData _selectedLevelData;
         private SectionDataContainer _selectedSectionDataContainer;
@@ -82,9 +84,13 @@ namespace Editor
                     }
                 }
             }
-
+            
+            EditorGUILayout.EndHorizontal();
+            
             if (_selectedSectionDataContainer.Data!=null)
             {
+                EditorGUILayout.BeginHorizontal();
+                
                 for (var index = 0; index < _selectedSectionDataContainer.Data.Count; index++)
                 {
                     var gridData = _selectedSectionDataContainer.Data[index];
@@ -96,9 +102,8 @@ namespace Editor
                     }
                 }
                 GUI.backgroundColor = Color.white;
+                EditorGUILayout.EndHorizontal();
             }
-            
-            EditorGUILayout.EndHorizontal();
             
             if (GUILayout.Button("ClearAll"))
             {

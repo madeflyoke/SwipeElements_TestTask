@@ -18,6 +18,7 @@ namespace Services.Progress.Levels
         public LevelSection RelatedSection;
         public BlockType[,] GridState;
         public bool IsStarted;
+        public string UniqueKey;
 
         public LevelData ConvertToLevelData()
         {

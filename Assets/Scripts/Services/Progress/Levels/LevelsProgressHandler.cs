@@ -103,7 +103,21 @@ namespace Services.Progress.Levels
         
         public LevelProgressDataExtended LoadLastPlayedLevelData()
         {
-            return LoadInternal<LevelProgressDataExtended>(LAST_PLAYED_LEVEL_DATA);
+            var lastPlayerData = LoadInternal<LevelProgressDataExtended>(LAST_PLAYED_LEVEL_DATA);
+            var container = _assetsProviderService.LoadLevelsSectionDataContainer(_currentSectionProgressDataContainer.Section);
+            var originalLevelUniqueKey =container.GetUniqueKey(lastPlayerData.LevelId);
+
+            if (originalLevelUniqueKey!=lastPlayerData.UniqueKey)
+            {
+                Debug.LogWarning("Last level data changed, set actual level...");
+                var originalLevel = container.GetLevelData(lastPlayerData.LevelId);
+                _cachedCurrentLevelProgressData = null;
+                SaveCurrentLevelExtendedData(lastPlayerData.RelatedSection,lastPlayerData.LevelId, originalLevel.BlocksData);
+            }
+            
+            lastPlayerData = LoadInternal<LevelProgressDataExtended>(LAST_PLAYED_LEVEL_DATA);
+
+            return lastPlayerData;
         }
         
         public void SaveLastOpenedSection(LevelSection section)
@@ -123,6 +137,8 @@ namespace Services.Progress.Levels
                 _cachedCurrentLevelProgressData.LevelId!=levelId)
             {
                 _cachedCurrentLevelProgressData = new LevelProgressDataExtended();
+                var uniqueKey =  _assetsProviderService.LoadLevelsSectionDataContainer(section).GetUniqueKey(levelId);
+                _cachedCurrentLevelProgressData.UniqueKey = uniqueKey;
             }
             
             _cachedCurrentLevelProgressData.RelatedSection = section;

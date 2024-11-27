@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using Gameplay.Levels.Enums;
+using Utility;
 
 namespace Gameplay.Levels.Data
 {
@@ -28,6 +30,24 @@ namespace Gameplay.Levels.Data
             return originalData?.Copy();
         }
         
+        public string GetUniqueKey(int levelId)
+        {
+            var level = GetLevelData(levelId);
+            StringBuilder sb = new StringBuilder();
+            sb
+                .Append(level.LevelId)
+                .Append((int) Section);
+
+            level.BlocksData.ForEach((e,x,y) =>
+            {
+                sb.Append((int) e)
+                    .Append(x)
+                    .Append(y);
+            });
+
+            return sb.ToString();
+        }
+        
 #if UNITY_EDITOR
         public LevelData AddNextLevelData_Editor()
         {
@@ -41,6 +61,10 @@ namespace Gameplay.Levels.Data
             if (Data.Any(x=>x.LevelId==levelData.LevelId))
             {
                 Data.Remove(levelData);
+                for (int i = 0; i < Data.Count; i++)
+                {
+                    Data[i].LevelId = i;
+                }
             }
         }
         

@@ -49,7 +49,7 @@ namespace Gameplay.Managers
                 
             if (lastPlayedLevel.IsStarted && lastPlayedLevel.IsCompleted==false) //continue last started but not completed level
             {
-                SetLevel(_currentLevelData,lastPlayedLevel.RelatedSection);
+                SetLevel(_currentLevelData,_currentSection);
             }
             else //level selector choice for
             { 
