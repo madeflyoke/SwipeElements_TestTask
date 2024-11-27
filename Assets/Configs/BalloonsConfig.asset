@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cea7a235e9e58434e872532739f53825, type: 3}
+  m_Name: BalloonsConfig
+  m_EditorClassIdentifier: 
+  <Prefab>k__BackingField: {fileID: 6353117553001656295, guid: 7564b13edb1fa804b93fbce7783d282d, type: 3}
+  <BalloonsVariantsSprites>k__BackingField:
+  - {fileID: 21300000, guid: ec77a2b0d8ed00f4aa093d2f2f53be3e, type: 3}
+  - {fileID: 21300000, guid: 1af84834c39265241ae5939244834758, type: 3}
+  <MaxBalloonsCount>k__BackingField: 3
+  <SpawnDelaySeconds>k__BackingField: 2
+  <StraightDirection>k__BackingField: 0
+  <MinSpeed>k__BackingField: 0.7
+  <MaxSpeed>k__BackingField: 1.5
+  <PathSineAmplitude>k__BackingField: 0.5
+  <PathSineFrequency>k__BackingField: 2
