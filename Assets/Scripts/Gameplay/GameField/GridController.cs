@@ -92,7 +92,10 @@ namespace Gameplay.GameField
                 var canceled =await SwapCells(fromCell, toCell).AttachExternalCancellation(_cts.Token).SuppressCancellationThrow(); //KEYPOINT
                 if (canceled==false)
                 {
-                    await TryBlocksFalling().AttachExternalCancellation(_cts.Token).SuppressCancellationThrow();
+                    if (await TryBlocksFalling().AttachExternalCancellation(_cts.Token).SuppressCancellationThrow()==(false, false))
+                    {
+                        await HandleMatches().AttachExternalCancellation(_cts.Token).SuppressCancellationThrow();
+                    }
                 }
             }
         }
@@ -186,10 +189,6 @@ namespace Gameplay.GameField
                     await HandleMatches().AttachExternalCancellation(_cts.Token).SuppressCancellationThrow();
                 }
             }
-            else
-            {
-                await HandleMatches().AttachExternalCancellation(_cts.Token).SuppressCancellationThrow();
-            }
 
             return fallingPerformed;
         }
@@ -234,7 +233,7 @@ namespace Gameplay.GameField
                     OnBlocksDestroyed();
                 }
             }
-            else
+            else if(await TryBlocksFalling().AttachExternalCancellation(_cts.Token).SuppressCancellationThrow()==(false, false))
             {
                 CallOnGameFieldChanged(); //no more matches - save state
             }
