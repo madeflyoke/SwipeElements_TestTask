@@ -37,6 +37,8 @@ namespace Editor
         private LevelSection _selectedLevelSection;
         private int _selectedLevelId;
 
+        private LevelData _copiedLevelData;
+
         [MenuItem("Window/Levels Editor")]
         public static void ShowWindow()
         {
@@ -85,6 +87,17 @@ namespace Editor
                 }
             }
             
+            if (GUILayout.Button("CopyLevel", GUILayout.Width(150), GUILayout.Height(25)))
+            {
+                _copiedLevelData = _selectedLevelData;
+            }
+            
+            if (GUILayout.Button("PasteLevel", GUILayout.Width(150), GUILayout.Height(25)))
+            {
+                _selectedLevelData.BlocksData = _copiedLevelData.BlocksData;
+                SelectLevel(_selectedLevelId);
+            }
+            
             EditorGUILayout.EndHorizontal();
             
             if (_selectedSectionDataContainer.Data!=null)
@@ -116,7 +129,7 @@ namespace Editor
                 DrawGrid();
             }
             
-            if (GUILayout.Button("Save Levels Data"))
+            if (GUILayout.Button("Save Levels Data (click it every time, all changes that was made without click is visual only"))
             {
                 SaveLevelsData();
             }
