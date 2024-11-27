@@ -17,3 +17,9 @@ MonoBehaviour:
     AnimatorOverrideController: {fileID: 22100000, guid: e1249c67e6e48bf4896561f0db394bbd, type: 2}
   - Type: 2
     AnimatorOverrideController: {fileID: 22100000, guid: ed40222b4a895be44a761fc6280c789f, type: 2}
+  <MovementAnimationData>k__BackingField:
+    Duration: 0.3
+    Ease: 24
+    WithCustomEaseParameters: 1
+    CustomAmplitude: 0.05
+    CustomPeriod: 0.25

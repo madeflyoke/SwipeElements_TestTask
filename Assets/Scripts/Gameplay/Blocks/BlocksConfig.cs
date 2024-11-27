@@ -9,6 +9,7 @@ namespace Gameplay.Blocks
     public class BlocksConfig : ScriptableObject
     {
         [SerializeField] private List<BlockViewData> _blocksViewData;
+        [field: SerializeField] public Block.MovementAnimationData MovementAnimationData { get; private set; }
 
         public BlockViewData GetBlockViewData(BlockType blockType)
         {
