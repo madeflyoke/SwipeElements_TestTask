@@ -35,6 +35,14 @@ namespace Gameplay.Levels.Data
             Data.Add(newData);
             return newData;
         }
+
+        public void RemoveLevelData_Editor(LevelData levelData)
+        {
+            if (Data.Any(x=>x.LevelId==levelData.LevelId))
+            {
+                Data.Remove(levelData);
+            }
+        }
         
         public void AddLevelData_Editor(LevelData data)
         {

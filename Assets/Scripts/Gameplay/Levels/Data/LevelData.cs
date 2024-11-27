@@ -63,6 +63,28 @@ namespace Gameplay.Levels.Data
 
             BlocksData[xCoord, yCoord] = type;
         }
+        
+        public void ShiftBlocks_Editor(int shiftX, int shiftY)
+        {
+            var newBlocksData = new BlockType[GridWidth, GridHeight];
+
+            for (var x = 0; x < GridWidth; x++)
+            {
+                for (var y = 0; y < GridHeight; y++)
+                {
+                    var newX = x + shiftX;
+                    var newY = y + shiftY;
+
+                    if (newX >= 0 && newX < GridWidth && newY >= 0 && newY < GridHeight)
+                    {
+                        newBlocksData[newX, newY] = BlocksData[x, y];
+                    }
+                }
+            }
+
+            BlocksData = newBlocksData;
+        }
+        
 
         public void ClearData_Editor()
         {

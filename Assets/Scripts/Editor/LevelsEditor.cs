@@ -11,7 +11,7 @@ using Utility;
 
 namespace Editor
 {
-    //Not supported "Remove level" feature, just delete file for now
+    //Very-very raw
     public class LevelsEditor : EditorWindow
     {
         private const int GRID_SIZE = 15; //maximum size of comfort field (mobiles)
@@ -64,6 +64,23 @@ namespace Editor
             {
                 _selectedSectionDataContainer.AddNextLevelData_Editor();
                 SelectLevel(_selectedSectionDataContainer.Data.Count-1);
+            }
+            
+            if (GUILayout.Button("RemoveCurrentLevel", GUILayout.Width(150), GUILayout.Height(25)))
+            {
+                if (_selectedLevelData!=null)
+                {
+                    _selectedSectionDataContainer.RemoveLevelData_Editor(_selectedLevelData);
+                    if (_selectedSectionDataContainer.Data.Count>0)
+                    {
+                        SelectLevel(0);
+                    }
+                    else
+                    {
+                        ResetGrid();
+                        _selectedLevelData = null;
+                    }
+                }
             }
 
             if (_selectedSectionDataContainer.Data!=null)
@@ -179,6 +196,11 @@ namespace Editor
                 var maxX = _selectedLevelData.GridWidth;
                 var maxY = _selectedLevelData.GridHeight;
 
+                var yOffset = 0 - FindLowestCellY();
+                var xOffset = 1 - FindLowestCellX(); //1 because visible grid starts from (1,1) coords 
+
+                _selectedLevelData.ShiftBlocks_Editor(xOffset,yOffset);
+                
                 var lastColumnEmpty = true;
                 
                 for (int yCoord = 0; yCoord < _selectedLevelData.GridHeight; yCoord++)
@@ -194,8 +216,57 @@ namespace Editor
                 {
                     _selectedLevelData.AddData_Editor(maxX, maxY-1, BlockType.NONE); //add right side 1 cell
                 }
+                SelectLevel(_selectedLevelId);
             }
         }
+        
+        private int FindLowestCellY()
+        {
+            var blocks = _selectedLevelData.BlocksData;
+            int lowestBlockY = -1;
+            
+            blocks.ForEach((e,x,y) =>
+            {
+                if (e!=BlockType.NONE)
+                {
+                    if (lowestBlockY==-1)
+                    {
+                        lowestBlockY = y;
+                    }
+                    else if (y<lowestBlockY)
+                    { 
+                        lowestBlockY = y;
+                    }
+                    
+                }
+            });
+            
+            return lowestBlockY;
+        }
+        
+        private int FindLowestCellX()
+        {
+            var blocks = _selectedLevelData.BlocksData;
+            int lowestBlockX = -1;
+            
+            blocks.ForEach((e,x,y) =>
+            {
+                if (e!=BlockType.NONE)
+                {
+                    if (lowestBlockX==-1)
+                    {
+                        lowestBlockX = x;
+                    }
+                    else if (x<lowestBlockX)
+                    { 
+                        lowestBlockX = x;
+                    }
+                }
+            });
+            
+            return lowestBlockX;
+        }
+        
         
         private void LoadLevelsData()
         {

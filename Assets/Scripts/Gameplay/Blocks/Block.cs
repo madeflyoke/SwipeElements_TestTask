@@ -38,7 +38,7 @@ namespace Gameplay.Blocks
         {
             _movingTween?.Kill(true);
             SetBusy(true);
-            _movingTween = transform.DOMove(pos, 0.3f)
+            _movingTween = transform.DOMove(pos, 0.3f) //maybe speed based? for constant speed
                 .SetEase(Ease.OutElastic,amplitude:0.05f,period:0.25f) //TODO Config
                 .OnComplete(() =>
                 {
