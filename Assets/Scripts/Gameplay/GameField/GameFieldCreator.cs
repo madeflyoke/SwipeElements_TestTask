@@ -52,7 +52,9 @@ namespace Gameplay.GameField
                 if (blockType!=BlockType.NONE)
                 {
                     var block = _blocksSpawner.Spawn(blockType, i.transform);
+#pragma warning disable CS4014
                     i.SetBlock(block, false);
+#pragma warning restore CS4014
                 }
             });
         }

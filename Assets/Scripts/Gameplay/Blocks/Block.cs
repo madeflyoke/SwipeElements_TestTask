@@ -36,6 +36,7 @@ namespace Gameplay.Blocks
 
         public void MoveTo(Vector3 pos,Action onComplete)
         {
+            _movingTween?.Kill(true);
             SetBusy(true);
             _movingTween = transform.DOMove(pos, 0.3f)
                 .SetEase(Ease.OutElastic,amplitude:0.05f,period:0.25f) //TODO Config
