@@ -10,7 +10,7 @@ namespace Services.Input
     {
         public event Action<Vector3, SwipeDirection> SwipePerformed; 
         
-        private float _minSwipeDistance = 100f;
+        private float _minSwipeDistance = 50f;
         private float _maxSwipeTime = 0.5f;
 
         private Vector2 _startPosition;

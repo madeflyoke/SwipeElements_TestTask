@@ -71,7 +71,8 @@ namespace Gameplay.Managers
 
         private void RestartLevel()
         {
-            SetLevel(_currentLevelData, _currentSection);
+            var currentSection = _assetsProviderService.LoadLevelsSectionDataContainer(_currentSection);
+            SetLevel(currentSection.GetLevelData(_currentLevelData.LevelId), _currentSection);
         }
         
         private void SetNextLevel()
