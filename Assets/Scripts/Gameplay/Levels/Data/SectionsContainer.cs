@@ -13,5 +13,11 @@ namespace Gameplay.Levels.Data
         {
             return _sections[index];
         }
+
+        public LevelSection GetNextSection(LevelSection currentSection)
+        {
+            var nextId = _sections.IndexOf(currentSection) + 1;
+            return _sections[Mathf.Clamp(nextId,0, _sections.Count-1)];
+        }
     }
 }

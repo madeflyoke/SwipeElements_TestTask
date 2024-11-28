@@ -77,16 +77,26 @@ namespace Gameplay.Managers
         
         private void SetNextLevel()
         {
-            var currentSection = _assetsProviderService.LoadLevelsSectionDataContainer(_currentSection);
-            var nextLevelId = _currentLevelData.LevelId+1;
+            var currentSectionDataContainer = _assetsProviderService.LoadLevelsSectionDataContainer(_currentSection);
             
-            if (nextLevelId>=currentSection.Data.Count)
+            LevelData nextLevelData = null;
+            
+            //New section unlock - usually will be with animations and on the road map
+            
+            if (_levelsProgressHandler.IsSectionCompleted(currentSectionDataContainer.Section)) 
             {
-                nextLevelId = 0; //for now cycle loop
+                var newLevelSection = _assetsProviderService.LoadLevelSectionsContainer().GetNextSection(currentSectionDataContainer.Section);
+                _currentSection = newLevelSection;
+                _levelsProgressHandler.SaveLastOpenedSection(newLevelSection);
+                nextLevelData = _assetsProviderService.LoadLevelsSectionDataContainer(newLevelSection).GetLevelData(0);
             }
-            var levelData =currentSection.GetLevelData(nextLevelId);
-
-            SetLevel(levelData,_currentSection);
+            else //for now cycle loop
+            {
+                var nextLevelId = _currentLevelData.LevelId+1;
+                nextLevelData =currentSectionDataContainer.GetLevelData(nextLevelId);
+            }
+            
+            SetLevel(nextLevelData,_currentSection);
         }
     }
 }
