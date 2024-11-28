@@ -48,6 +48,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _balloonsConfig: {fileID: 11400000, guid: 0bf38ded7dff080408c6296e9ba6fec9, type: 2}
   _balloonsSpawner: {fileID: 7231335199707361928}
+  _autoLaunch: 1
 --- !u!114 &7231335199707361928
 MonoBehaviour:
   m_ObjectHideFlags: 0
