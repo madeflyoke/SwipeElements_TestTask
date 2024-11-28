@@ -13,5 +13,17 @@ namespace Services.Progress.Levels
         
         public LevelSection Section;
         public List<LevelProgressData> LevelsProgressData;
+        
+        [JsonIgnore] public Dictionary<int, LevelProgressData> LevelsProgressDataMap =>
+            _levelsProgressDataMap ??=LevelsProgressData.ToDictionary(x => x.LevelId, z => z);
+        [JsonIgnore] private Dictionary<int, LevelProgressData> _levelsProgressDataMap;
+
+        public SectionProgressDataContainer(List<LevelProgressData> levelProgressDatas, LevelSection section)
+        {
+            Section = section;
+            LevelsProgressData = levelProgressDatas;
+        }
+        
+        public SectionProgressDataContainer(){}
     }
 }

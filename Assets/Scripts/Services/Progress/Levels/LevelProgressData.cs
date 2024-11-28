@@ -22,11 +22,7 @@ namespace Services.Progress.Levels
 
         public LevelData ConvertToLevelData()
         {
-            return new LevelData()
-            {
-                BlocksData = GridState,
-                LevelId = this.LevelId
-            };
+            return new LevelData(this.LevelId,GridState);
         }
     }
 }
