@@ -47,6 +47,11 @@ namespace Gameplay.Levels.Data
 
             return sb.ToString();
         }
+
+        public bool IsLastLevel(int index)
+        {
+            return Data.Count - 1 == index;
+        }
         
 #if UNITY_EDITOR
         public LevelData AddNextLevelData_Editor()
@@ -65,19 +70,6 @@ namespace Gameplay.Levels.Data
                 {
                     Data[i].LevelId = i;
                 }
-            }
-        }
-        
-        public void AddLevelData_Editor(LevelData data)
-        {
-            if (Data.Any(x=>x.LevelId==data.LevelId))
-            {
-               var index =Data.IndexOf(Data.FirstOrDefault(x => x.LevelId == data.LevelId));
-               Data[index] = data;
-            }
-            else
-            {
-                Data.Add(data);
             }
         }
 #endif

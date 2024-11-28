@@ -83,7 +83,8 @@ namespace Gameplay.Managers
             
             //New section unlock - usually will be with animations and on the road map
             
-            if (_levelsProgressHandler.IsSectionCompleted(currentSectionDataContainer.Section)) 
+            if (currentSectionDataContainer.IsLastLevel(_currentLevelData.LevelId) &&
+                _levelsProgressHandler.IsSectionCompleted(currentSectionDataContainer.Section)) 
             {
                 var newLevelSection = _assetsProviderService.LoadLevelSectionsContainer().GetNextSection(currentSectionDataContainer.Section);
                 _currentSection = newLevelSection;
