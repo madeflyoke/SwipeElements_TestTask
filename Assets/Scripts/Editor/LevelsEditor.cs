@@ -12,11 +12,10 @@ using Utility;
 
 namespace Editor
 {
-    //Very-very raw
     public partial class LevelsEditor : EditorWindow
     {
-        private const int GRID_SIZE = 15; //maximum size of comfort field (mobiles)
-    
+        private const int MAX_GRID_SIZE = 30; //i dont think will be more, especially on mobiles 
+        
         private readonly Dictionary<Color, BlockType> _blockTypesByColors = new Dictionary<Color, BlockType>()
         {
             {Color.clear, BlockType.NONE},
@@ -24,7 +23,7 @@ namespace Editor
             {Color.blue, BlockType.WATER},
         };
 
-        private Color[,]_colors = new Color[GRID_SIZE, GRID_SIZE];
+        private Color[,]_colors = new Color[MAX_GRID_SIZE, MAX_GRID_SIZE];
         private Color _selectedColor = Color.red;
         
         private Vector2 _currentScrollPosition;
@@ -38,7 +37,10 @@ namespace Editor
         private LevelSection _selectedLevelSection;
         private int _selectedLevelId;
 
-        private LevelData _copiedLevelData;
+        private Color[,] _copiedLevelDataColors;
+
+        private int _currentGridWidth =3;
+        private int _currentGridHeight = 3;
 
         [MenuItem("Window/Levels Editor")]
         public static void ShowWindow()
@@ -58,20 +60,22 @@ namespace Editor
             
             EditorGUILayout.BeginHorizontal();
 
-            _selectedBlockType = (BlockType)EditorGUILayout.EnumPopup("Block Type", _selectedBlockType, GUILayout.Width(250),
+            GUILayout.Label("Block Type", GUILayout.Width(100));
+            _selectedBlockType = (BlockType)EditorGUILayout.EnumPopup(_selectedBlockType, GUILayout.Width(100),
                 GUILayout.Height(25));
             _selectedColor =_blockTypesByColors.FirstOrDefault(x => x.Value == _selectedBlockType).Key;
             
-            SelectSection((LevelSection)EditorGUILayout.EnumPopup("Level Section", _selectedLevelSection, GUILayout.Width(250),
+            GUILayout.Label("Level Section", GUILayout.Width(100));
+            SelectSection((LevelSection)EditorGUILayout.EnumPopup(_selectedLevelSection, GUILayout.Width(150),
             GUILayout.Height(25)));
 
-            if (GUILayout.Button("AddLevel", GUILayout.Width(150), GUILayout.Height(25)))
+            if (GUILayout.Button("+Level", GUILayout.Width(75), GUILayout.Height(25)))
             {
                 _selectedSectionDataContainer.AddNextLevelData_Editor();
                 SelectLevel(_selectedSectionDataContainer.Data.Count-1);
             }
             
-            if (GUILayout.Button("RemoveCurrentLevel", GUILayout.Width(150), GUILayout.Height(25)))
+            if (GUILayout.Button("-Level", GUILayout.Width(75), GUILayout.Height(25)))
             {
                 if (_selectedLevelData!=null)
                 {
@@ -84,21 +88,41 @@ namespace Editor
                     {
                         ResetGrid();
                         _selectedLevelData = null;
-                        _editor_expandedBlocksData = null;
                     }
                 }
             }
             
-            if (GUILayout.Button("CopyLevel", GUILayout.Width(150), GUILayout.Height(25)))
+            if (GUILayout.Button("Copy", GUILayout.Width(100), GUILayout.Height(25)))
             {
-                _copiedLevelData = _selectedLevelData;
+                _copiedLevelDataColors = _colors;
             }
             
-            if (GUILayout.Button("PasteLevel", GUILayout.Width(150), GUILayout.Height(25)))
+            if (GUILayout.Button("Paste", GUILayout.Width(100), GUILayout.Height(25)))
             {
-                AddData_Editor(_copiedLevelData.BlocksData);
-                SelectLevel(_selectedLevelId);
+                if (_copiedLevelDataColors!=null)
+                {
+                    _currentGridWidth = _copiedLevelDataColors.GetLength(0);
+                    _currentGridHeight = _copiedLevelDataColors.GetLength(1);
+                    _colors = _copiedLevelDataColors;
+                }
             }
+            
+            if (GUILayout.Button("Normalize", GUILayout.Width(100), GUILayout.Height(25)))
+            {
+                CorrectLevelDataColors();
+            }
+            
+            EditorGUILayout.EndHorizontal();
+            
+            EditorGUILayout.BeginHorizontal();
+            
+            GUILayout.Label("GridWidth", GUILayout.Width(100));
+            _currentGridWidth =
+                EditorGUILayout.IntField(Mathf.Clamp(_currentGridWidth, 3, MAX_GRID_SIZE), GUILayout.Width(50), GUILayout.Height(25));
+            
+            GUILayout.Label("GridHeight", GUILayout.Width(100));
+            _currentGridHeight =
+                EditorGUILayout.IntField(Mathf.Clamp(_currentGridHeight, 3, MAX_GRID_SIZE), GUILayout.Width(50), GUILayout.Height(25));
             
             EditorGUILayout.EndHorizontal();
             
@@ -120,10 +144,9 @@ namespace Editor
                 EditorGUILayout.EndHorizontal();
             }
             
-            if (GUILayout.Button("ClearAll"))
+            if (GUILayout.Button("Clear"))
             {
                 ResetGrid();
-                ClearData_Editor();
             }
 
             if (_selectedLevelData!=null)
@@ -139,22 +162,29 @@ namespace Editor
 
         private void DrawGrid()
         {
-            var gridSize = GRID_SIZE - 1;
-            for (var yPos = 0; yPos <= gridSize; yPos++)
+            if (_colors.GetLength(0)<_currentGridWidth || _colors.GetLength(1)<_currentGridHeight)
             {
-                EditorGUILayout.BeginHorizontal(); //buttons draw from left-up point, while actual data start will be left-bottom point
+                ExpandColorsData_Editor();
+            }
+
+            for (var yPos = _currentGridHeight-1; yPos >=0; yPos--)
+            {
+                EditorGUILayout.BeginHorizontal();
                 GUILayout.FlexibleSpace();
 
-                for (var xPos = 1; xPos < gridSize; xPos++)
+                for (var xPos =0; xPos < _currentGridWidth; xPos++)
                 {
-                    GUI.backgroundColor = _colors[xPos, yPos];
-
-                    var normalizedYPos = Mathf.Abs(yPos-gridSize);
-                
-                    if (GUILayout.Button($"{xPos}:{normalizedYPos}", GUILayout.MaxWidth(45), GUILayout.MaxHeight(45)))
+                    var blockedButton = xPos == 0 || xPos == _currentGridWidth - 1;
+                    
+                    GUI.backgroundColor = blockedButton ? Color.black : _colors[xPos, yPos];
+                    
+                    if (GUILayout.Button($"{xPos}:{yPos}", GUILayout.MaxWidth(45), GUILayout.MaxHeight(45)))
                     {
+                        if (blockedButton)
+                        {
+                            continue;
+                        }
                         _colors[xPos, yPos] = _selectedColor;
-                        AddData_Editor(xPos,normalizedYPos, _blockTypesByColors[_selectedColor]);
                     }
                 }
 
@@ -167,7 +197,11 @@ namespace Editor
 
         private void ResetGrid()
         {
-            _colors = new Color[GRID_SIZE, GRID_SIZE];
+            _colors = new Color[_currentGridWidth, _currentGridHeight];
+            _colors.ForEach((e, x, y) =>
+            {
+                _colors[x, y] = Color.clear;
+            });
         }
 
         private void SelectSection(LevelSection section)
@@ -177,14 +211,13 @@ namespace Editor
                 _selectedLevelSection = section;
                 _selectedSectionDataContainer =
                     _allLevelsSectionsDataContainers.FirstOrDefault(x => x.Section == section);
+                ResetGrid();
                 SelectLevel(0);
             }
         }
         
         private void SelectLevel(int id)
         {
-            ResetGrid();
-
             if (_selectedSectionDataContainer.Data==null ||
                 _selectedSectionDataContainer.Data.Count==0 )
             {
@@ -192,8 +225,11 @@ namespace Editor
             }
             
             _selectedLevelData = _selectedSectionDataContainer.Data[id];
-            UpdateExpandedEditorBlocksData();
-
+            _currentGridWidth = _selectedLevelData.GridWidth;
+            _currentGridHeight = _selectedLevelData.GridHeight;
+            
+            ResetGrid();
+           
             for (var i = 0; i < _selectedLevelData.GridWidth; i++)
             {
                 for (var j = 0; j < _selectedLevelData.GridHeight; j++)
@@ -202,7 +238,7 @@ namespace Editor
                         .FirstOrDefault(x => x.Value == _selectedLevelData.BlocksData[i, j]); //preserve that values are unique
 
                     var posX = Mathf.Abs(i);
-                    var posY = Mathf.Abs(j-(GRID_SIZE - 1));
+                    var posY = Mathf.Abs(j);
                     _colors[posX, posY] = colorKvp.Key;
                 }
             }
@@ -210,43 +246,23 @@ namespace Editor
             _selectedLevelId = id;
         }
 
-        private void CorrectLevelData() //make grid corrected to fit game conditions
+        private void CorrectLevelDataColors() //make grid corrected to fit game conditions
         {
-            if (_selectedLevelData.BlocksData.Length!=0)
-            {
-                var yOffset = 0 - FindLowestCellY();
-                var xOffset = 1 - FindLowestCellX(); //1 because visible grid starts from (1,1) coords 
+            var yOffset = 0 - FindLowestCellY();
+            var xOffset = 1 - FindLowestCellX(); //1 because visible grid starts from (1,1) coords 
 
-                ShiftBlocks_Editor(xOffset,yOffset);
-                ShrinkData_Editor();
-                
-                var lastColumnEmpty = true;
-                
-                for (var yCoord = 0; yCoord < _selectedLevelData.GridHeight; yCoord++)
-                {
-                    if (_selectedLevelData.BlocksData[_selectedLevelData.GridWidth-1, yCoord]!=BlockType.NONE)
-                    {
-                        lastColumnEmpty = false;
-                        break;
-                    }
-                }
-
-                if (lastColumnEmpty==false)
-                {
-                    AddData_Editor(_selectedLevelData.GridWidth, _selectedLevelData.GridWidth-1, BlockType.NONE); //add right side 1 cell
-                }
-                SelectLevel(_selectedLevelId);
-            }
+            ShiftBlocks_Editor(xOffset,yOffset);
+            ShrinkData_Editor();
         }
         
         private int FindLowestCellY()
         {
-            var blocks = _selectedLevelData.BlocksData;
+            var blocksColors = _colors;
             var lowestBlockY = -1;
             
-            blocks.ForEach((e,x,y) =>
+            blocksColors.ForEach((e,x,y) =>
             {
-                if (e!=BlockType.NONE)
+                if (e!=Color.clear)
                 {
                     if (lowestBlockY==-1)
                     {
@@ -265,12 +281,12 @@ namespace Editor
         
         private int FindLowestCellX()
         {
-            var blocks = _selectedLevelData.BlocksData;
+            var blocksColors = _colors;
             var lowestBlockX = -1;
             
-            blocks.ForEach((e,x,y) =>
+            blocksColors.ForEach((e,x,y) =>
             {
-                if (e!=BlockType.NONE)
+                if (e!= Color.clear)
                 {
                     if (lowestBlockX==-1)
                     {
@@ -318,7 +334,15 @@ namespace Editor
         
         private void SaveLevelsData()
         {
-            CorrectLevelData();
+            BlockType[,] newBlockData = new BlockType[_currentGridWidth, _currentGridHeight];
+            
+            _colors.ForEach((e,x,y) =>
+            {
+                newBlockData[x, y] = _blockTypesByColors[e];
+            });
+            
+            SetBlocksData_Editor(newBlockData);
+            SelectLevel(_selectedLevelId);
             var targetName = StringHelpers.BuildDataNameByType<SectionDataContainer>(
                 _selectedSectionDataContainer.Section.ToString());
             
@@ -337,79 +361,43 @@ namespace Editor
     /// </summary>
     public partial class LevelsEditor
     {
-        //use list in editor for easily expand-shrink and then assign it to 2d array
-        private BlockType[,] _editor_expandedBlocksData;
-        
-        private void AddData_Editor(int xCoord, int yCoord, BlockType type)
+        private void SetBlocksData_Editor(BlockType[,] blockData)
         {
-            int GridWidth() => _editor_expandedBlocksData.GetLength(0);
-            int GridHeight() => _editor_expandedBlocksData.GetLength(1);
-            
-            BlockType[,] newArray = null;
-            
-            void CopyData()
-            {
-                _editor_expandedBlocksData.ForEach((x, y) =>
-                {
-                    newArray[x, y] = _editor_expandedBlocksData[x, y];
-                });
-                
-                _editor_expandedBlocksData = newArray;
-            }
-            
-            if (xCoord >= GridWidth()) //flexible expand
-            {
-                newArray = new BlockType[xCoord + 1, GridHeight()];
-                CopyData();
-            }
-
-            if (yCoord >= GridHeight())
-            {
-                newArray = new BlockType[GridWidth(), yCoord + 1];
-                CopyData();
-            }
-
-            _editor_expandedBlocksData[xCoord, yCoord] = type;
-            _selectedLevelData.SaveDataFromEditor(_editor_expandedBlocksData);
-        }
-
-        private void AddData_Editor(BlockType[,] blockData)
-        {
-            _editor_expandedBlocksData = blockData;
             _selectedLevelData.SaveDataFromEditor(blockData);
         }
 
         private void ShiftBlocks_Editor(int shiftX, int shiftY)
         {
-            var newBlocksData = new BlockType[_selectedLevelData.GridWidth, _selectedLevelData.GridHeight];
+            var newBlocksColorsData = new Color[_currentGridWidth, _currentGridHeight];
 
-            for (var x = 0; x < _selectedLevelData.GridWidth; x++)
+            for (var x = 0; x < _currentGridWidth; x++)
             {
-                for (var y = 0; y <  _selectedLevelData.GridHeight; y++)
+                for (var y = 0; y <  _currentGridHeight; y++)
                 {
                     var newX = x + shiftX;
                     var newY = y + shiftY;
 
-                    if (newX >= 0 && newX < _selectedLevelData.GridWidth && newY >= 0 && newY <  _selectedLevelData.GridHeight)
+                    if (newX >= 0 && newX < _currentGridWidth && newY >= 0 && newY <  _currentGridHeight)
                     {
-                        newBlocksData[newX, newY] = _selectedLevelData.BlocksData[x, y];
+                        newBlocksColorsData[newX, newY] = _colors[x, y];
                     }
                 }
             }
-            _selectedLevelData.SaveDataFromEditor(newBlocksData);
+
+            _colors = newBlocksColorsData;
         }
         
         private void ShrinkData_Editor()
         {
-            var gridWidth = _editor_expandedBlocksData.GetLength(0);
-            var gridHeight = _editor_expandedBlocksData.GetLength(1);
+            var gridWidth = _colors.GetLength(0);
+            var gridHeight = _colors.GetLength(1);
 
             var newWidth = 0;
             var newHeight = 0;
 
-            _editor_expandedBlocksData.ForEach((e,x,y) =>
+            _colors.ForEach((e,x,y) =>
             {
-                if (e != BlockType.NONE)
+                if (e != Color.clear)
                 {
                     if (x + 1 > newWidth)
                     {
@@ -427,26 +415,27 @@ namespace Editor
                 return;
             }
             
-            var newArray = new BlockType[newWidth, newHeight];
+            var newArray = new Color[newWidth+1, newHeight];
             
             newArray.ForEach((e,x,y) =>
             {
-                newArray[x, y] = _editor_expandedBlocksData[x, y];
+                newArray[x, y] = _colors[x, y];
             });
-            
-            _editor_expandedBlocksData = newArray;
-            _selectedLevelData.SaveDataFromEditor(_editor_expandedBlocksData);
+
+            _currentGridWidth = newArray.GetLength(0); //right empty cell
+            _currentGridHeight = newArray.GetLength(1);
+            _colors = newArray;
         }
         
-        private void ClearData_Editor()
+        private void ExpandColorsData_Editor()
         {
-            _editor_expandedBlocksData = new BlockType[0, 0];
-            _selectedLevelData?.ClearDataFromEditor();
-        }
-
-        private void UpdateExpandedEditorBlocksData()
-        {
-            _editor_expandedBlocksData = _selectedLevelData.BlocksData;
+            var newArray = new Color[_currentGridWidth, _currentGridHeight];
+            
+            _colors.ForEach((e,x,y) =>
+            {
+                newArray[x, y] = e;
+            });
+            _colors = newArray;
         }
     }
 }
